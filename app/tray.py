@@ -49,9 +49,8 @@ class TrayIcon(QSystemTrayIcon):
     def _build_menu(self) -> None:
         menu = QMenu()
 
-        self._act_time = menu.addAction("⏱ Time remaining")
-        self._act_time.triggered.connect(self._on_time_popup)
-        self._act_time.setEnabled(False)
+        self._act_time_label = menu.addAction("Not running")
+        self._act_time_label.setEnabled(False)
 
         menu.addSeparator()
 
@@ -75,16 +74,30 @@ class TrayIcon(QSystemTrayIcon):
         act_quit = menu.addAction("Quit")
         act_quit.triggered.connect(self._on_quit)
 
+        menu.aboutToShow.connect(self._update_time_label)
         self.setContextMenu(menu)
 
     def _update_actions(self) -> None:
         active = self._timer.phase in (Phase.WORK, Phase.BREAK)
         paused = self._timer.phase == Phase.PAUSED
-        self._act_time.setEnabled(active or paused)
         self._act_pause.setEnabled(active or paused)
         self._act_pause.setText("Resume" if paused else "Pause")
         self._act_skip.setEnabled(active)
         self._act_stop.setEnabled(active or paused)
+
+    def _update_time_label(self) -> None:
+        phase = self._timer.phase
+        if phase == Phase.WORK:
+            minutes, seconds = divmod(self._timer.seconds_left, 60)
+            self._act_time_label.setText(f"Work  {minutes:02d}:{seconds:02d}")
+        elif phase == Phase.BREAK:
+            minutes, seconds = divmod(self._timer.seconds_left, 60)
+            self._act_time_label.setText(f"Break  {minutes:02d}:{seconds:02d}")
+        elif phase == Phase.PAUSED:
+            minutes, seconds = divmod(self._timer.seconds_left, 60)
+            self._act_time_label.setText(f"Paused  {minutes:02d}:{seconds:02d}")
+        else:
+            self._act_time_label.setText("Not running")
 
     # ------------------------------------------------------------------
     # Slots
@@ -109,23 +122,8 @@ class TrayIcon(QSystemTrayIcon):
         self._window.activateWindow()
 
     def _on_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
-        if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            self._on_time_popup()
-        elif reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self._on_show()
-
-    def _on_time_popup(self) -> None:
-        if self._notifier is None:
-            return
-        phase = self._timer.phase
-        if phase == Phase.WORK:
-            minutes, seconds = divmod(self._timer.seconds_left, 60)
-            self._notifier.notify("Work session", f"{minutes:02d}:{seconds:02d} remaining")
-        elif phase == Phase.BREAK:
-            minutes, seconds = divmod(self._timer.seconds_left, 60)
-            self._notifier.notify("Break", f"{minutes:02d}:{seconds:02d} remaining")
-        else:
-            self._notifier.notify("Pomodoro", "No session running")
 
     def _on_pause_resume(self) -> None:
         if self._timer.phase == Phase.PAUSED:

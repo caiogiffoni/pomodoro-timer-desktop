@@ -124,10 +124,10 @@ Trigger each milestone explicitly. Do not advance until the previous one is veri
 - [x] Saves to config on accept
 - [x] Verify: changes persist across restarts, live preview plays sound
 
-### Milestone 8 — Polish + final QA
-- [ ] Real `icon.png` (tray + window icon)
-- [ ] Real `alarm.wav`
-- [ ] Window title and taskbar name
-- [ ] Handle missing `notify-send` gracefully (not installed = silent)
-- [ ] Handle missing sound file gracefully
-- [ ] Verify full loop: WORK → notification+sound → BREAK → notification+sound → WORK
+### Milestone 8 — Polish + final QA ✓
+- [x] Real `icon.png` (tray + window icon)
+- [x] Real `alarm.wav`
+- [x] Window title and taskbar name
+- [x] Handle missing `notify-send` gracefully (not installed = silent)
+- [x] Handle missing sound file gracefully
+- [x] Verify full loop: WORK → notification+sound → BREAK → notification+sound → WORK

@@ -59,7 +59,7 @@ class _ArcWidget(QWidget):
 
         # Progress arc (depletes clockwise from top)
         if self._fraction > 0:
-            color = _COLOR_WORK if self._phase == Phase.WORK else _COLOR_BREAK
+            color = _COLOR_BREAK if self._phase == Phase.BREAK else _COLOR_WORK
             pen = QPen(color, _ARC_WIDTH)
             pen.setCapStyle(Qt.PenCapStyle.FlatCap)
             p.setPen(pen)
@@ -181,6 +181,10 @@ class MainWindow(QMainWindow):
                 self.hide()
                 return
         super().changeEvent(event)
+
+    def closeEvent(self, event) -> None:
+        event.ignore()
+        self.hide()
 
     # ------------------------------------------------------------------
 

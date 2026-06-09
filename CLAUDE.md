@@ -75,12 +75,12 @@ pomodoro/
 
 Trigger each milestone explicitly. Do not advance until the previous one is verified working.
 
-### Milestone 1 — Scaffold + dependencies
-- [ ] Add `PyQt6` to `pyproject.toml` dependencies
-- [ ] Create `app/__init__.py` (empty)
-- [ ] Create `assets/` placeholder (`icon.png`, `alarm.wav` stubs or real files)
-- [ ] Update `requirements.txt`
-- [ ] Verify: `uv run python main.py` prints something and exits cleanly
+### Milestone 1 — Scaffold + dependencies ✓
+- [x] Add `PyQt6` to `pyproject.toml` dependencies
+- [x] Create `app/__init__.py` (empty)
+- [x] Create `assets/` placeholder (`icon.png`, `alarm.wav` stubs or real files)
+- [x] Update `requirements.txt`
+- [x] Verify: `uv run python main.py` prints something and exits cleanly
 
 ### Milestone 2 — Timer core (`timer.py`)
 - [ ] Implement `PomodoroTimer(QObject)` with `QTimer`

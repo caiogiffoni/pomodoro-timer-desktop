@@ -43,7 +43,7 @@ def main() -> None:
     window = MainWindow(timer=timer, icon=icon, cfg=cfg, notifier=notifier)
     window.show()
 
-    tray = TrayIcon(icon=icon, timer=timer, window=window)
+    tray = TrayIcon(icon=icon, timer=timer, window=window, notifier=notifier)
     tray.show()
 
     sys.exit(app.exec())

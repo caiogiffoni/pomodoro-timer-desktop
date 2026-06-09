@@ -13,6 +13,7 @@ from app.timer import Phase, PomodoroTimer
 
 _COLOR_WORK = QColor("#D85A30")
 _COLOR_BREAK = QColor("#1D9E75")
+_COLOR_STOP = QColor("#C0392B")
 _COLOR_TRACK = QColor("#2E2E2E")
 _COLOR_BG = QColor("#1A1A1A")
 _COLOR_TEXT = QColor("#F0F0F0")
@@ -96,9 +97,15 @@ class MainWindow(QMainWindow):
         self._arc.set_state(1.0, Phase.IDLE, timer.work_duration)
 
         self._btn_start = QPushButton("Start")
-        self._btn_start.setFixedSize(120, 40)
+        self._btn_start.setFixedSize(100, 40)
         self._btn_start.setStyleSheet(self._btn_style(_COLOR_WORK))
         self._btn_start.clicked.connect(self._on_start_stop)
+
+        self._btn_pause = QPushButton("Pause")
+        self._btn_pause.setFixedSize(100, 40)
+        self._btn_pause.setStyleSheet(self._btn_style(QColor("#888888")))
+        self._btn_pause.clicked.connect(self._on_pause_resume)
+        self._btn_pause.setVisible(False)
 
         self._btn_gear = QPushButton("⚙")
         self._btn_gear.setFixedSize(36, 36)
@@ -111,6 +118,8 @@ class MainWindow(QMainWindow):
         btn_row = QHBoxLayout()
         btn_row.addStretch()
         btn_row.addWidget(self._btn_start)
+        btn_row.addSpacing(8)
+        btn_row.addWidget(self._btn_pause)
         btn_row.addStretch()
         btn_row.addWidget(self._btn_gear)
 
@@ -126,6 +135,8 @@ class MainWindow(QMainWindow):
         # Signals
         timer.tick.connect(self._on_tick)
         timer.phase_ended.connect(self._on_phase_ended)
+        timer.paused.connect(self._on_paused)
+        timer.resumed.connect(self._on_resumed)
         timer.stopped.connect(self._on_stopped)
 
     # ------------------------------------------------------------------
@@ -139,26 +150,42 @@ class MainWindow(QMainWindow):
     def _on_phase_ended(self, phase: str) -> None:
         if phase == "work":
             self._total_seconds = self._timer.break_duration
-            self._btn_start.setStyleSheet(self._btn_style(_COLOR_BREAK))
-            self._btn_start.setText("Stop")
         else:
             self._total_seconds = self._timer.work_duration
-            self._btn_start.setStyleSheet(self._btn_style(_COLOR_WORK))
-            self._btn_start.setText("Stop")
+        self._btn_start.setText("Stop")
+        self._btn_start.setStyleSheet(self._btn_style(_COLOR_STOP))
 
     def _on_stopped(self) -> None:
         self._total_seconds = self._timer.work_duration
         self._arc.set_state(1.0, Phase.IDLE, self._timer.work_duration)
         self._btn_start.setText("Start")
         self._btn_start.setStyleSheet(self._btn_style(_COLOR_WORK))
+        self._btn_pause.setVisible(False)
+        self._btn_pause.setText("Pause")
+
+    def _on_paused(self) -> None:
+        self._btn_pause.setText("Resume")
+        self._btn_pause.setStyleSheet(self._btn_style(_COLOR_WORK if self._timer._phase_before_pause == Phase.WORK else _COLOR_BREAK))
+
+    def _on_resumed(self) -> None:
+        self._btn_pause.setText("Pause")
+        self._btn_pause.setStyleSheet(self._btn_style(QColor("#888888")))
 
     def _on_start_stop(self) -> None:
         if self._timer.phase in (Phase.IDLE, Phase.STOPPED):
             self._total_seconds = self._timer.work_duration
             self._timer.start()
             self._btn_start.setText("Stop")
+            self._btn_start.setStyleSheet(self._btn_style(_COLOR_STOP))
+            self._btn_pause.setVisible(True)
         else:
             self._timer.stop()
+
+    def _on_pause_resume(self) -> None:
+        if self._timer.phase == Phase.PAUSED:
+            self._timer.resume()
+        else:
+            self._timer.pause()
 
     def _on_settings(self) -> None:
         from app import config

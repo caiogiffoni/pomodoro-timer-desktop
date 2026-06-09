@@ -7,12 +7,15 @@ class Phase(Enum):
     IDLE = auto()
     WORK = auto()
     BREAK = auto()
+    PAUSED = auto()
     STOPPED = auto()
 
 
 class PomodoroTimer(QObject):
     tick = pyqtSignal(int)         # seconds remaining
     phase_ended = pyqtSignal(str)  # "work" or "break"
+    paused = pyqtSignal()
+    resumed = pyqtSignal()
     stopped = pyqtSignal()
 
     def __init__(self, work_minutes: int = 25, break_minutes: int = 5, parent=None):
@@ -22,6 +25,7 @@ class PomodoroTimer(QObject):
 
         self._phase = Phase.IDLE
         self._seconds_left = 0
+        self._phase_before_pause: Phase = Phase.IDLE
 
         self._qtimer = QTimer(self)
         self._qtimer.setInterval(1000)
@@ -43,8 +47,21 @@ class PomodoroTimer(QObject):
         if self._phase in (Phase.IDLE, Phase.STOPPED):
             self._enter_work()
 
+    def pause(self) -> None:
+        if self._phase in (Phase.WORK, Phase.BREAK):
+            self._qtimer.stop()
+            self._phase_before_pause = self._phase
+            self._phase = Phase.PAUSED
+            self.paused.emit()
+
+    def resume(self) -> None:
+        if self._phase == Phase.PAUSED:
+            self._phase = self._phase_before_pause
+            self._qtimer.start()
+            self.resumed.emit()
+
     def stop(self) -> None:
-        if self._phase not in (Phase.IDLE, Phase.STOPPED):
+        if self._phase in (Phase.WORK, Phase.BREAK, Phase.PAUSED):
             self._qtimer.stop()
             self._phase = Phase.STOPPED
             self._seconds_left = 0
@@ -90,4 +107,6 @@ class PomodoroTimer(QObject):
             if ended_phase == "work":
                 self._enter_break()
             else:
-                self._enter_work()
+                self._phase = Phase.IDLE
+                self._seconds_left = 0
+                self.stopped.emit()

@@ -1,14 +1,39 @@
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap, QRadialGradient, QBrush
 from PyQt6.QtWidgets import QMenu, QSystemTrayIcon
 
 from app.timer import Phase, PomodoroTimer
 
 
+def _make_dot_icon(color: QColor) -> QIcon:
+    size = 64
+    pix = QPixmap(size, size)
+    pix.fill(Qt.GlobalColor.transparent)
+
+    p = QPainter(pix)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    grad = QRadialGradient(size * 0.38, size * 0.35, size * 0.5)
+    grad.setColorAt(0.0, color.lighter(140))
+    grad.setColorAt(0.6, color)
+    grad.setColorAt(1.0, color.darker(140))
+    p.setBrush(QBrush(grad))
+    p.setPen(Qt.PenStyle.NoPen)
+    p.drawEllipse(4, 4, size - 8, size - 8)
+
+    p.end()
+    return QIcon(pix)
+
+
 class TrayIcon(QSystemTrayIcon):
-    def __init__(self, icon: QIcon, timer: PomodoroTimer, window, parent=None):
+    def __init__(self, icon: QIcon, timer: PomodoroTimer, window, notifier=None, parent=None):
         super().__init__(icon, parent)
         self._timer = timer
         self._window = window
+        self._notifier = notifier
+        self._static_icon = icon
+        self._icon_work = _make_dot_icon(QColor("#D85A30"))
+        self._icon_break = _make_dot_icon(QColor("#1D9E75"))
 
         self.setToolTip("Pomodoro")
         self._build_menu()
@@ -24,8 +49,18 @@ class TrayIcon(QSystemTrayIcon):
     def _build_menu(self) -> None:
         menu = QMenu()
 
+        self._act_time = menu.addAction("⏱ Time remaining")
+        self._act_time.triggered.connect(self._on_time_popup)
+        self._act_time.setEnabled(False)
+
+        menu.addSeparator()
+
         self._act_show = menu.addAction("Show")
         self._act_show.triggered.connect(self._on_show)
+
+        self._act_pause = menu.addAction("Pause")
+        self._act_pause.triggered.connect(self._on_pause_resume)
+        self._act_pause.setEnabled(False)
 
         self._act_skip = menu.addAction("Skip phase")
         self._act_skip.triggered.connect(self._timer.skip)
@@ -44,8 +79,12 @@ class TrayIcon(QSystemTrayIcon):
 
     def _update_actions(self) -> None:
         active = self._timer.phase in (Phase.WORK, Phase.BREAK)
+        paused = self._timer.phase == Phase.PAUSED
+        self._act_time.setEnabled(active or paused)
+        self._act_pause.setEnabled(active or paused)
+        self._act_pause.setText("Resume" if paused else "Pause")
         self._act_skip.setEnabled(active)
-        self._act_stop.setEnabled(active)
+        self._act_stop.setEnabled(active or paused)
 
     # ------------------------------------------------------------------
     # Slots
@@ -56,10 +95,12 @@ class TrayIcon(QSystemTrayIcon):
         label = "Work" if phase == Phase.WORK else "Break"
         minutes, seconds = divmod(seconds_left, 60)
         self.setToolTip(f"Pomodoro — {label} {minutes:02d}:{seconds:02d}")
+        self.setIcon(self._icon_work if phase == Phase.WORK else self._icon_break)
         self._update_actions()
 
     def _on_stopped(self) -> None:
         self.setToolTip("Pomodoro")
+        self.setIcon(self._static_icon)
         self._update_actions()
 
     def _on_show(self) -> None:
@@ -74,30 +115,24 @@ class TrayIcon(QSystemTrayIcon):
             self._on_show()
 
     def _on_time_popup(self) -> None:
+        if self._notifier is None:
+            return
         phase = self._timer.phase
         if phase == Phase.WORK:
             minutes, seconds = divmod(self._timer.seconds_left, 60)
-            self.showMessage(
-                "Work session",
-                f"{minutes:02d}:{seconds:02d} remaining",
-                QSystemTrayIcon.MessageIcon.NoIcon,
-                3000,
-            )
+            self._notifier.notify("Work session", f"{minutes:02d}:{seconds:02d} remaining")
         elif phase == Phase.BREAK:
             minutes, seconds = divmod(self._timer.seconds_left, 60)
-            self.showMessage(
-                "Break",
-                f"{minutes:02d}:{seconds:02d} remaining",
-                QSystemTrayIcon.MessageIcon.NoIcon,
-                3000,
-            )
+            self._notifier.notify("Break", f"{minutes:02d}:{seconds:02d} remaining")
         else:
-            self.showMessage(
-                "Pomodoro",
-                "No session running",
-                QSystemTrayIcon.MessageIcon.NoIcon,
-                2000,
-            )
+            self._notifier.notify("Pomodoro", "No session running")
+
+    def _on_pause_resume(self) -> None:
+        if self._timer.phase == Phase.PAUSED:
+            self._timer.resume()
+        else:
+            self._timer.pause()
+        self._update_actions()
 
     def _on_quit(self) -> None:
         self._timer.stop()

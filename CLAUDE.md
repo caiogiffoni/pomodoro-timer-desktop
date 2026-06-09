@@ -82,27 +82,27 @@ Trigger each milestone explicitly. Do not advance until the previous one is veri
 - [x] Update `requirements.txt`
 - [x] Verify: `uv run python main.py` prints something and exits cleanly
 
-### Milestone 2 — Timer core (`timer.py`)
-- [ ] Implement `PomodoroTimer(QObject)` with `QTimer`
-- [ ] State machine: `IDLE`, `WORK`, `BREAK`, `STOPPED`
-- [ ] Signals: `tick(int)`, `phase_ended(str)`, `stopped()`
-- [ ] Methods: `start()`, `stop()`, `skip()`
-- [ ] Zero UI or widget imports
-- [ ] Verify: instantiate and drive in a throwaway script, signals fire correctly
+### Milestone 2 — Timer core (`timer.py`) ✓
+- [x] Implement `PomodoroTimer(QObject)` with `QTimer`
+- [x] State machine: `IDLE`, `WORK`, `BREAK`, `STOPPED`
+- [x] Signals: `tick(int)`, `phase_ended(str)`, `stopped()`
+- [x] Methods: `start()`, `stop()`, `skip()`
+- [x] Zero UI or widget imports
+- [x] Verify: instantiate and drive in a throwaway script, signals fire correctly
 
-### Milestone 3 — Main window + arc (`window.py`)
-- [ ] `MainWindow(QMainWindow)` with fixed size
-- [ ] `QPainter` arc that depletes clockwise; color switches by phase
-- [ ] Start/Stop button centered below arc
-- [ ] Gear icon button that opens (stubbed) settings dialog
-- [ ] Wire to `PomodoroTimer` signals — arc repaints on `tick`
-- [ ] Verify: window opens, arc animates, button starts/stops timer
+### Milestone 3 — Main window + arc (`window.py`) ✓
+- [x] `MainWindow(QMainWindow)` with fixed size
+- [x] `QPainter` arc that depletes clockwise; color switches by phase
+- [x] Start/Stop button centered below arc
+- [x] Gear icon button that opens (stubbed) settings dialog
+- [x] Wire to `PomodoroTimer` signals — arc repaints on `tick`
+- [x] Verify: window opens, arc animates, button starts/stops timer
 
-### Milestone 4 — Config + first-launch seeding (`main.py`)
-- [ ] `load_config()` / `save_config()` reading `~/.config/pomodoro/config.json`
-- [ ] First-launch: create sounds dir, copy `assets/alarm.wav` as `default.wav`
-- [ ] Pass config into window/timer on startup
-- [ ] Verify: config file created on first run, values survive restart
+### Milestone 4 — Config + first-launch seeding (`main.py`) ✓
+- [x] `load_config()` / `save_config()` reading `~/.config/pomodoro/config.json`
+- [x] First-launch: create sounds dir, copy `assets/alarm.wav` as `default.wav`
+- [x] Pass config into window/timer on startup
+- [x] Verify: config file created on first run, values survive restart
 
 ### Milestone 5 — Notifier (`notifier.py`)
 - [ ] `Notifier` class: `play_sound(path, volume)` via `QMediaPlayer`

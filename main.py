@@ -21,6 +21,7 @@ _MESSAGES = {
 def main() -> None:
     app = QApplication(sys.argv)
     app.setApplicationName("Pomodoro")
+    app.setQuitOnLastWindowClosed(False)
 
     config.seed(_ASSETS)
     cfg = config.load()

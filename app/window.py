@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtCore import Qt, QEvent, QRect
 from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QPen
 from PyQt6.QtWidgets import (
     QHBoxLayout,
@@ -173,6 +173,14 @@ class MainWindow(QMainWindow):
             )
             if self._notifier:
                 self._notifier.set_volume(self._cfg["volume"])
+
+    def changeEvent(self, event: QEvent) -> None:
+        if event.type() == QEvent.Type.WindowStateChange:
+            if self.isMinimized():
+                event.ignore()
+                self.hide()
+                return
+        super().changeEvent(event)
 
     # ------------------------------------------------------------------
 

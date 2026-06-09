@@ -4,35 +4,36 @@ A Pomodoro timer desktop app for Ubuntu (Linux) built with Python + PyQt6.
 
 ## Features
 
-- Circular arc countdown drawn with QPainter (depletes clockwise)
-- Work phase: 25 min, red arc (`#D85A30`)
-- Break phase: 5 min, teal arc (`#1D9E75`)
-- System tray icon with tooltip (remaining time) and context menu
+- Circular arc countdown drawn with QPainter, depletes clockwise
+- Work phase (default 25 min) — red-orange arc; break phase (default 5 min) — teal arc
+- Start, Pause/Resume, and Stop controls
+- Break starts automatically when work ends; work requires manual start (you may be away)
+- System tray icon: red dot during work, green dot during break, tomato when idle
+- Tray context menu shows live countdown (`mm:ss`) that updates in real time
 - Desktop notification + alarm sound on phase end
-- Settings dialog: durations, volume, sound file picker
+- Minimize or close sends the window to tray; app keeps running until Quit
+- Settings dialog: work/break durations, volume slider, sound file picker
+- 4 bundled alarm sounds: default beeps, bell, digital, soft chime
+- Config persists to `~/.config/pomodoro/config.json`
 
 ## Requirements
 
 - Ubuntu 24.04
 - Python 3.14
-- `notify-send` (usually pre-installed on Ubuntu)
+- `libxcb-cursor0`: `sudo apt install libxcb-cursor0`
+- `notify-send` (pre-installed on Ubuntu)
 
 ## Setup
 
 ```bash
-# Clone and enter
 git clone <repo> && cd pomodoro-timer-desktop
-
-# Install dependencies via uv
 uv pip install PyQt6
-
-# Run
 uv run python main.py
 ```
 
 ## Config
 
-Persisted to `~/.config/pomodoro/config.json`. Created automatically on first launch.
+Created automatically at `~/.config/pomodoro/config.json` on first launch.
 
 ```json
 {
@@ -43,6 +44,4 @@ Persisted to `~/.config/pomodoro/config.json`. Created automatically on first la
 }
 ```
 
-## Development
-
-See `CLAUDE.md` for architecture details and the incremental build plan.
+Bundled sounds are copied to `~/.config/pomodoro/sounds/` on first launch and are selectable from Settings.

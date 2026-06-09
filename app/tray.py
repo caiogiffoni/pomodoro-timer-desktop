@@ -40,6 +40,9 @@ class TrayIcon(QSystemTrayIcon):
 
         self.activated.connect(self._on_activated)
         timer.tick.connect(self._on_tick)
+        timer.tick.connect(lambda _: self._update_time_label())
+        timer.paused.connect(self._update_time_label)
+        timer.resumed.connect(self._update_time_label)
         timer.stopped.connect(self._on_stopped)
 
     # ------------------------------------------------------------------

@@ -2,20 +2,37 @@ import shutil
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
-    QLabel,
     QPushButton,
+    QLabel,
     QSlider,
     QSpinBox,
+    QStyle,
     QVBoxLayout,
 )
 
 _SOUNDS_DIR = Path.home() / ".config" / "pomodoro" / "sounds"
+
+
+class _JumpSlider(QSlider):
+    """Horizontal slider that jumps to the clicked position instead of paging."""
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            val = QStyle.sliderValueFromPosition(
+                self.minimum(),
+                self.maximum(),
+                event.pos().x(),
+                self.width(),
+            )
+            self.setValue(val)
+        super().mousePressEvent(event)
 
 
 class SettingsDialog(QDialog):
@@ -25,8 +42,9 @@ class SettingsDialog(QDialog):
         self._notifier = notifier
 
         self.setWindowTitle("Settings")
-        self.setFixedWidth(340)
+        self.setFixedWidth(360)
         self.setModal(True)
+        self.setStyleSheet("font-size: 14px;")
 
         # --- Work duration ---
         self._spin_work = QSpinBox()
@@ -41,16 +59,27 @@ class SettingsDialog(QDialog):
         self._spin_break.setValue(cfg["break_duration"])
 
         # --- Volume ---
-        self._slider_vol = QSlider(Qt.Orientation.Horizontal)
+        self._slider_vol = _JumpSlider(Qt.Orientation.Horizontal)
         self._slider_vol.setRange(0, 100)
         self._slider_vol.setValue(cfg["volume"])
-        self._lbl_vol = QLabel(str(cfg["volume"]))
-        self._lbl_vol.setFixedWidth(28)
-        self._slider_vol.valueChanged.connect(self._on_volume_changed)
+
+        self._spin_vol = QSpinBox()
+        self._spin_vol.setRange(0, 100)
+        self._spin_vol.setFixedWidth(54)
+        self._spin_vol.setValue(cfg["volume"])
+
+        # keep slider and spinbox in sync
+        self._slider_vol.valueChanged.connect(self._spin_vol.setValue)
+        self._spin_vol.valueChanged.connect(self._slider_vol.setValue)
+        # update notifier volume live
+        self._slider_vol.valueChanged.connect(self._notifier.set_volume)
+        # play preview only on release (slider handle drop or spinbox confirm)
+        self._slider_vol.sliderReleased.connect(self._on_volume_preview)
+        self._spin_vol.editingFinished.connect(self._on_volume_preview)
 
         vol_row = QHBoxLayout()
-        vol_row.addWidget(self._slider_vol)
-        vol_row.addWidget(self._lbl_vol)
+        vol_row.addWidget(self._slider_vol, stretch=1)
+        vol_row.addWidget(self._spin_vol)
 
         # --- Sound picker ---
         self._lbl_sound = QLabel(self._short_name(cfg["selected_sound"]))
@@ -98,9 +127,7 @@ class SettingsDialog(QDialog):
     # Slots
     # ------------------------------------------------------------------
 
-    def _on_volume_changed(self, value: int) -> None:
-        self._lbl_vol.setText(str(value))
-        self._notifier.set_volume(value)
+    def _on_volume_preview(self) -> None:
         self._notifier.play_sound(self._cfg["selected_sound"])
 
     def _on_pick_sound(self) -> None:

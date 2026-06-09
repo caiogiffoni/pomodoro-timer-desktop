@@ -104,25 +104,25 @@ Trigger each milestone explicitly. Do not advance until the previous one is veri
 - [x] Pass config into window/timer on startup
 - [x] Verify: config file created on first run, values survive restart
 
-### Milestone 5 — Notifier (`notifier.py`)
-- [ ] `Notifier` class: `play_sound(path, volume)` via `QMediaPlayer`
-- [ ] `notify(title, body)` via `subprocess` + `notify-send`
-- [ ] Called from `main.py` on `phase_ended` signal
-- [ ] Verify: sound plays and desktop notification appears at phase end
+### Milestone 5 — Notifier (`notifier.py`) ✓
+- [x] `Notifier` class: `play_sound(path, volume)` via `QMediaPlayer`
+- [x] `notify(title, body)` via `subprocess` + `notify-send`
+- [x] Called from `main.py` on `phase_ended` signal
+- [x] Verify: sound plays and desktop notification appears at phase end
 
-### Milestone 6 — Tray icon (`tray.py`)
-- [ ] `TrayIcon(QSystemTrayIcon)` with `icon.png`
-- [ ] Tooltip updates on `tick` signal with remaining time
-- [ ] Context menu: Show, Skip phase, Stop, Quit
-- [ ] Verify: tray icon visible, tooltip updates, menu actions work
+### Milestone 6 — Tray icon (`tray.py`) ✓
+- [x] `TrayIcon(QSystemTrayIcon)` with `icon.png`
+- [x] Tooltip updates on `tick` signal with remaining time
+- [x] Context menu: Show, Skip phase, Stop, Quit
+- [x] Verify: tray icon visible, tooltip updates, menu actions work
 
-### Milestone 7 — Settings dialog (`settings.py`)
-- [ ] `SettingsDialog(QDialog)` opened from gear icon
-- [ ] Spinboxes: work duration, break duration
-- [ ] Volume slider with live preview (plays sound at new volume)
-- [ ] Sound file picker — opens `~/.config/pomodoro/sounds/`, copies selection there
-- [ ] Saves to config on accept
-- [ ] Verify: changes persist across restarts, live preview plays sound
+### Milestone 7 — Settings dialog (`settings.py`) ✓
+- [x] `SettingsDialog(QDialog)` opened from gear icon
+- [x] Spinboxes: work duration, break duration
+- [x] Volume slider with live preview (plays sound at new volume)
+- [x] Sound file picker — opens `~/.config/pomodoro/sounds/`, copies selection there
+- [x] Saves to config on accept
+- [x] Verify: changes persist across restarts, live preview plays sound
 
 ### Milestone 8 — Polish + final QA
 - [ ] Real `icon.png` (tray + window icon)

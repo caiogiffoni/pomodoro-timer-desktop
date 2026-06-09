@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QApplication
 from app import config
 from app.notifier import Notifier
 from app.timer import PomodoroTimer
+from app.tray import TrayIcon
 from app.window import MainWindow
 
 _ASSETS = Path(__file__).parent / "assets"
@@ -38,8 +39,11 @@ def main() -> None:
 
     timer.phase_ended.connect(on_phase_ended)
 
-    window = MainWindow(timer=timer, icon=icon, cfg=cfg)
+    window = MainWindow(timer=timer, icon=icon, cfg=cfg, notifier=notifier)
     window.show()
+
+    tray = TrayIcon(icon=icon, timer=timer, window=window)
+    tray.show()
 
     sys.exit(app.exec())
 

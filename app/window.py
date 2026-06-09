@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, QRect
-from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
+from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QPen
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QMainWindow,
@@ -36,7 +36,7 @@ class _ArcWidget(QWidget):
         self._seconds_left = seconds_left
         self.update()
 
-    def paintEvent(self, _event) -> None:
+    def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -79,10 +79,11 @@ class _ArcWidget(QWidget):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, timer: PomodoroTimer, icon: QIcon, cfg: dict, parent=None):
+    def __init__(self, timer: PomodoroTimer, icon: QIcon, cfg: dict, notifier=None, parent=None):
         super().__init__(parent)
         self._timer = timer
         self._cfg = cfg
+        self._notifier = notifier
         self._total_seconds = timer.work_duration
 
         self.setWindowTitle("Pomodoro")
@@ -160,8 +161,18 @@ class MainWindow(QMainWindow):
             self._timer.stop()
 
     def _on_settings(self) -> None:
-        from PyQt6.QtWidgets import QMessageBox
-        QMessageBox.information(self, "Settings", "Settings dialog — coming in milestone 7.")
+        from app import config
+        from app.settings import SettingsDialog
+        dlg = SettingsDialog(cfg=self._cfg, notifier=self._notifier, parent=self)
+        if dlg.exec():
+            self._cfg = dlg.updated_cfg()
+            config.save(self._cfg)
+            self._timer.update_durations(
+                self._cfg["work_duration"],
+                self._cfg["break_duration"],
+            )
+            if self._notifier:
+                self._notifier.set_volume(self._cfg["volume"])
 
     # ------------------------------------------------------------------
 

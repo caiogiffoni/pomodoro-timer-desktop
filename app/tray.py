@@ -69,7 +69,35 @@ class TrayIcon(QSystemTrayIcon):
 
     def _on_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self._on_time_popup()
+        elif reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self._on_show()
+
+    def _on_time_popup(self) -> None:
+        phase = self._timer.phase
+        if phase == Phase.WORK:
+            minutes, seconds = divmod(self._timer.seconds_left, 60)
+            self.showMessage(
+                "Work session",
+                f"{minutes:02d}:{seconds:02d} remaining",
+                QSystemTrayIcon.MessageIcon.NoIcon,
+                3000,
+            )
+        elif phase == Phase.BREAK:
+            minutes, seconds = divmod(self._timer.seconds_left, 60)
+            self.showMessage(
+                "Break",
+                f"{minutes:02d}:{seconds:02d} remaining",
+                QSystemTrayIcon.MessageIcon.NoIcon,
+                3000,
+            )
+        else:
+            self.showMessage(
+                "Pomodoro",
+                "No session running",
+                QSystemTrayIcon.MessageIcon.NoIcon,
+                2000,
+            )
 
     def _on_quit(self) -> None:
         self._timer.stop()

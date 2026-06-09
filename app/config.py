@@ -14,14 +14,23 @@ _DEFAULTS = {
 }
 
 
+_BUNDLED_SOUNDS = {
+    "default.wav": "alarm.wav",
+    "bell.wav": "bell.wav",
+    "digital.wav": "digital.wav",
+    "soft.wav": "soft.wav",
+}
+
+
 def seed(assets_dir: Path) -> None:
-    """Create config dir and copy default alarm on first launch."""
+    """Create config dir and copy bundled sounds on first launch."""
     _SOUNDS_DIR.mkdir(parents=True, exist_ok=True)
-    default_wav = _SOUNDS_DIR / "default.wav"
-    if not default_wav.exists():
-        src = assets_dir / "alarm.wav"
-        if src.exists():
-            shutil.copy2(src, default_wav)
+    for dest_name, src_name in _BUNDLED_SOUNDS.items():
+        dest = _SOUNDS_DIR / dest_name
+        if not dest.exists():
+            src = assets_dir / src_name
+            if src.exists():
+                shutil.copy2(src, dest)
     if not _CONFIG_FILE.exists():
         _CONFIG_FILE.write_text(json.dumps(_DEFAULTS, indent=2))
 

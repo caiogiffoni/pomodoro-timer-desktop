@@ -1,25 +1,32 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap, QRadialGradient, QBrush
+from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PyQt6.QtWidgets import QMenu, QSystemTrayIcon
 
 from app.timer import Phase, PomodoroTimer
 
 
-def _make_dot_icon(color: QColor) -> QIcon:
+def _make_phase_icon(base_icon: QIcon, color: QColor) -> QIcon:
     size = 64
+    ring = 6  # ring thickness
+
     pix = QPixmap(size, size)
     pix.fill(Qt.GlobalColor.transparent)
 
     p = QPainter(pix)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-    grad = QRadialGradient(size * 0.38, size * 0.35, size * 0.5)
-    grad.setColorAt(0.0, color.lighter(140))
-    grad.setColorAt(0.6, color)
-    grad.setColorAt(1.0, color.darker(140))
-    p.setBrush(QBrush(grad))
-    p.setPen(Qt.PenStyle.NoPen)
-    p.drawEllipse(4, 4, size - 8, size - 8)
+    # Tomato scaled to leave room for the ring
+    inner = size - ring * 2
+    tomato = base_icon.pixmap(inner, inner)
+    p.drawPixmap(ring, ring, tomato)
+
+    # Colored ring around it
+    pen = QPen(color, ring)
+    pen.setCapStyle(Qt.PenCapStyle.FlatCap)
+    p.setPen(pen)
+    p.setBrush(Qt.BrushStyle.NoBrush)
+    offset = ring // 2
+    p.drawEllipse(QRect(offset, offset, size - ring, size - ring))
 
     p.end()
     return QIcon(pix)
@@ -32,8 +39,8 @@ class TrayIcon(QSystemTrayIcon):
         self._window = window
         self._notifier = notifier
         self._static_icon = icon
-        self._icon_work = _make_dot_icon(QColor("#D85A30"))
-        self._icon_break = _make_dot_icon(QColor("#1D9E75"))
+        self._icon_work = _make_phase_icon(icon, QColor("#D85A30"))
+        self._icon_break = _make_phase_icon(icon, QColor("#1D9E75"))
 
         self.setToolTip("Pomodoro")
         self._build_menu()

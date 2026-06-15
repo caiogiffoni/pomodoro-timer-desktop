@@ -51,6 +51,10 @@ class TrayIcon(QSystemTrayIcon):
         timer.paused.connect(self._update_time_label)
         timer.resumed.connect(self._update_time_label)
         timer.stopped.connect(self._on_stopped)
+        self._update_actions()
+
+    def set_alarm_active(self, active: bool) -> None:
+        self._act_dismiss.setVisible(active)
 
     # ------------------------------------------------------------------
     # Menu
@@ -64,8 +68,15 @@ class TrayIcon(QSystemTrayIcon):
 
         menu.addSeparator()
 
+        self._act_dismiss = menu.addAction("Dismiss alarm")
+        self._act_dismiss.triggered.connect(self._on_dismiss)
+        self._act_dismiss.setVisible(False)
+
         self._act_show = menu.addAction("Show")
         self._act_show.triggered.connect(self._on_show)
+
+        self._act_start = menu.addAction("Start")
+        self._act_start.triggered.connect(self._timer.start)
 
         self._act_pause = menu.addAction("Pause")
         self._act_pause.triggered.connect(self._on_pause_resume)
@@ -90,6 +101,8 @@ class TrayIcon(QSystemTrayIcon):
     def _update_actions(self) -> None:
         active = self._timer.phase in (Phase.WORK, Phase.BREAK)
         paused = self._timer.phase == Phase.PAUSED
+        idle = self._timer.phase in (Phase.IDLE, Phase.STOPPED)
+        self._act_start.setEnabled(idle)
         self._act_pause.setEnabled(active or paused)
         self._act_pause.setText("Resume" if paused else "Pause")
         self._act_skip.setEnabled(active)
@@ -141,6 +154,11 @@ class TrayIcon(QSystemTrayIcon):
         else:
             self._timer.pause()
         self._update_actions()
+
+    def _on_dismiss(self) -> None:
+        if self._notifier:
+            self._notifier.stop_repeating()
+        self.set_alarm_active(False)
 
     def _on_quit(self) -> None:
         self._timer.stop()

@@ -58,6 +58,12 @@ class SettingsDialog(QDialog):
         self._spin_break.setSuffix(" min")
         self._spin_break.setValue(cfg["break_duration"])
 
+        # --- Repeat interval ---
+        self._spin_repeat = QSpinBox()
+        self._spin_repeat.setRange(5, 300)
+        self._spin_repeat.setSuffix(" sec")
+        self._spin_repeat.setValue(cfg.get("repeat_interval", 30))
+
         # --- Volume ---
         self._slider_vol = _JumpSlider(Qt.Orientation.Horizontal)
         self._slider_vol.setRange(0, 100)
@@ -97,6 +103,7 @@ class SettingsDialog(QDialog):
         form.addRow("Break duration:", self._spin_break)
         form.addRow("Volume:", vol_row)
         form.addRow("Alarm sound:", sound_row)
+        form.addRow("Repeat alarm every:", self._spin_repeat)
 
         # --- Buttons ---
         buttons = QDialogButtonBox(
@@ -121,6 +128,7 @@ class SettingsDialog(QDialog):
             "break_duration": self._spin_break.value(),
             "volume": self._slider_vol.value(),
             "selected_sound": self._cfg["selected_sound"],
+            "repeat_interval": self._spin_repeat.value(),
         }
 
     # ------------------------------------------------------------------

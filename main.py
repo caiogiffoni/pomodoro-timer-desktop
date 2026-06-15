@@ -33,18 +33,26 @@ def main() -> None:
     )
     notifier = Notifier(volume=cfg["volume"])
 
-    def on_phase_ended(phase: str) -> None:
-        title, body = _MESSAGES.get(phase, ("Pomodoro", "Phase ended."))
-        notifier.play_sound(cfg["selected_sound"])
-        notifier.notify(title, body)
-
-    timer.phase_ended.connect(on_phase_ended)
-
     window = MainWindow(timer=timer, icon=icon, cfg=cfg, notifier=notifier)
     window.show()
 
     tray = TrayIcon(icon=icon, timer=timer, window=window, notifier=notifier)
     tray.show()
+
+    def stop_alarm(_=None) -> None:
+        notifier.stop_repeating()
+        tray.set_alarm_active(False)
+
+    def on_phase_ended(phase: str) -> None:
+        title, body = _MESSAGES.get(phase, ("Pomodoro", "Phase ended."))
+        notifier.play_sound(cfg["selected_sound"])
+        notifier.notify(title, body)
+        if phase == "break":
+            notifier.start_repeating(cfg["selected_sound"], cfg["repeat_interval"])
+            tray.set_alarm_active(True)
+
+    timer.phase_ended.connect(on_phase_ended)
+    timer.tick.connect(stop_alarm)
 
     sys.exit(app.exec())
 

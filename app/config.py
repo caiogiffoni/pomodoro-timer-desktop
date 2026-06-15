@@ -11,6 +11,7 @@ _DEFAULTS = {
     "break_duration": 5,
     "volume": 80,
     "selected_sound": str(_SOUNDS_DIR / "default.wav"),
+    "repeat_interval": 30,
 }
 
 

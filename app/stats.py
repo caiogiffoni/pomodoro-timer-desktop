@@ -47,3 +47,15 @@ def last_7_days(week_offset: int = 0) -> list[tuple[str, int]]:
 
 def all_days() -> list[tuple[str, int]]:
     return sorted(_load().items(), reverse=True)
+
+
+def streak() -> int:
+    from datetime import timedelta
+    data = _load()
+    today = date.today()
+    d = today if data.get(today.isoformat(), 0) else today - timedelta(days=1)
+    count = 0
+    while data.get(d.isoformat(), 0):
+        count += 1
+        d -= timedelta(days=1)
+    return count

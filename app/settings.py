@@ -74,6 +74,12 @@ class SettingsDialog(QDialog):
         self._chk_auto_break = QCheckBox()
         self._chk_auto_break.setChecked(cfg.get("auto_start_break", False))
 
+        # --- Daily goal ---
+        self._spin_goal = QSpinBox()
+        self._spin_goal.setRange(0, 20)
+        self._spin_goal.setSpecialValueText("Off")
+        self._spin_goal.setValue(cfg.get("daily_goal", 0))
+
         # --- Repeat interval ---
         self._spin_repeat = QSpinBox()
         self._spin_repeat.setRange(5, 300)
@@ -123,6 +129,7 @@ class SettingsDialog(QDialog):
         form.addRow("Alarm sound:", sound_row)
         form.addRow("Repeat alarm every:", self._spin_repeat)
         form.addRow("Auto-start break:", self._chk_auto_break)
+        form.addRow("Daily goal:", self._spin_goal)
 
         # --- Buttons ---
         buttons = QDialogButtonBox(
@@ -151,6 +158,7 @@ class SettingsDialog(QDialog):
             "selected_sound": self._cfg["selected_sound"],
             "repeat_interval": self._spin_repeat.value(),
             "auto_start_break": self._chk_auto_break.isChecked(),
+            "daily_goal": self._spin_goal.value(),
         }
 
     # ------------------------------------------------------------------

@@ -211,6 +211,20 @@ class _StatsWidget(QWidget):
         toggle_row.addWidget(self._btn_list_toggle)
         toggle_row.addStretch()
 
+        # summary strip
+        _lbl_style = "color: #888888; font-size: 11px;"
+        self._lbl_streak = QLabel()
+        self._lbl_streak.setStyleSheet(_lbl_style)
+        self._lbl_goal = QLabel()
+        self._lbl_goal.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self._lbl_goal.setStyleSheet(_lbl_style)
+
+        summary_row = QHBoxLayout()
+        summary_row.setContentsMargins(12, 0, 12, 0)
+        summary_row.addWidget(self._lbl_streak)
+        summary_row.addStretch()
+        summary_row.addWidget(self._lbl_goal)
+
         # chart page
         self._chart = _ChartWidget()
 
@@ -266,6 +280,7 @@ class _StatsWidget(QWidget):
         vbox = QVBoxLayout()
         vbox.setContentsMargins(0, 6, 0, 0)
         vbox.addLayout(toggle_row)
+        vbox.addLayout(summary_row)
         vbox.addWidget(self._stack)
         self.setLayout(vbox)
 
@@ -273,7 +288,23 @@ class _StatsWidget(QWidget):
 
     def refresh(self) -> None:
         from datetime import date, timedelta
-        from app import stats
+        from app import config, stats
+
+        # summary strip
+        s = stats.streak()
+        self._lbl_streak.setText(f"{s}-day streak" if s > 0 else "")
+
+        cfg = config.load()
+        goal = cfg.get("daily_goal", 0)
+        n = stats.today_count()
+        if goal:
+            self._lbl_goal.setText(f"{n} / {goal} today")
+            self._lbl_goal.setStyleSheet(
+                f"color: {'#1D9E75' if n >= goal else '#888888'}; font-size: 11px;"
+            )
+        else:
+            self._lbl_goal.setText(f"{n} today")
+            self._lbl_goal.setStyleSheet("color: #888888; font-size: 11px;")
 
         data = stats.last_7_days(self._offset)
         self._chart.set_data(data, is_current=(self._offset == 0))

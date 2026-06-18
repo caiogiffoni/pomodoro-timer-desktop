@@ -16,6 +16,7 @@ _DEFAULTS = {
     "selected_sound": str(_SOUNDS_DIR / "default.wav"),
     "repeat_interval": 30,
     "auto_start_break": False,
+    "daily_goal": 0,
 }
 
 

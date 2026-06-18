@@ -152,9 +152,13 @@ class TrayIcon(QSystemTrayIcon):
         self._update_stats_label()
 
     def _update_stats_label(self) -> None:
-        from app import stats
+        from app import config, stats
         n = stats.today_count()
-        self._act_stats_label.setText(f"Today: {n} pomodoro{'s' if n != 1 else ''}")
+        goal = config.load().get("daily_goal", 0)
+        if goal:
+            self._act_stats_label.setText(f"Today: {n} / {goal}")
+        else:
+            self._act_stats_label.setText(f"Today: {n} pomodoro{'s' if n != 1 else ''}")
 
     def _on_show(self) -> None:
         self._window.showNormal()

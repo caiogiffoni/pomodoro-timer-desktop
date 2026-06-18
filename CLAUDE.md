@@ -17,11 +17,13 @@ Pomodoro timer desktop app for Ubuntu (Linux). Python 3.14 + PyQt6, managed with
 ## Commands
 
 ```bash
-# Install dependencies
-uv pip install PyQt6
+# First-time setup (installs system deps, uv, Python 3.14, PyQt6, creates launcher)
+./setup.sh
 
 # Run
 uv run python main.py
+# or, after setup.sh:
+pomodoro
 ```
 
 ## Structure

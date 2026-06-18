@@ -34,7 +34,8 @@ uv run python main.py
 │   ├── tray.py          # QSystemTrayIcon + context menu
 │   ├── notifier.py      # QMediaPlayer + notify-send
 │   ├── settings.py      # QDialog: durations, volume, sound picker
-│   └── config.py        # load/save ~/.config/pomodoro/config.json
+│   ├── config.py        # load/save ~/.config/pomodoro/config.json
+│   └── stats.py         # record/query ~/.config/pomodoro/stats.json
 ├── assets/
 │   ├── icon.png         # tomato icon (generated via QPainter)
 │   ├── alarm.wav        # 3-beep ascending tone
@@ -61,6 +62,8 @@ Any active/paused state → STOPPED → IDLE
 
 **Config** persists to `~/.config/pomodoro/config.json`. First launch seeds the sounds dir and copies all four bundled `.wav` files.
 
+**Stats** persists to `~/.config/pomodoro/stats.json`. One key per ISO date; value is the count of completed work sessions that day. Written by `stats.record_session()`, called from `main.py` on every `phase_ended("work")` signal. The Stats tab in `window.py` reads `stats.last_7_days()` to render a bar chart.
+
 **Colors:** work = `#D85A30`, break = `#1D9E75`, stop button = `#C0392B`.
 
 ## Config schema
@@ -71,6 +74,15 @@ Any active/paused state → STOPPED → IDLE
   "break_duration": 5,
   "volume": 80,
   "selected_sound": "~/.config/pomodoro/sounds/default.wav"
+}
+```
+
+## Stats schema
+
+```json
+{
+  "2026-06-18": 3,
+  "2026-06-17": 1
 }
 ```
 

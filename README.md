@@ -15,6 +15,7 @@ A Pomodoro timer desktop app for Ubuntu (Linux) built with Python + PyQt6.
 - Settings dialog: work/break durations, volume slider, sound file picker
 - 4 bundled alarm sounds: default beeps, bell, digital, soft chime
 - Config persists to `~/.config/pomodoro/config.json`
+- Daily session stats tracked in `~/.config/pomodoro/stats.json`; visible in the Stats tab
 
 ## Requirements
 
@@ -45,3 +46,16 @@ Created automatically at `~/.config/pomodoro/config.json` on first launch.
 ```
 
 Bundled sounds are copied to `~/.config/pomodoro/sounds/` on first launch and are selectable from Settings.
+
+## Stats
+
+Each completed work session is recorded in `~/.config/pomodoro/stats.json`, keyed by ISO date:
+
+```json
+{
+  "2026-06-18": 3,
+  "2026-06-17": 1
+}
+```
+
+The Stats tab in the main window shows a bar chart of the last 7 days. The tray context menu shows today's count.

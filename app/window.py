@@ -13,10 +13,12 @@ from app.timer import Phase, PomodoroTimer
 
 _COLOR_WORK = QColor("#D85A30")
 _COLOR_BREAK = QColor("#1D9E75")
+_COLOR_LONG_BREAK = QColor("#5B6AE8")
 _COLOR_STOP = QColor("#C0392B")
 _COLOR_TRACK = QColor("#2E2E2E")
 _COLOR_BG = QColor("#1A1A1A")
 _COLOR_TEXT = QColor("#F0F0F0")
+_COLOR_DIM = QColor("#555555")
 
 _ARC_MARGIN = 24
 _ARC_WIDTH = 10
@@ -28,13 +30,24 @@ class _ArcWidget(QWidget):
         self._fraction = 1.0
         self._phase = Phase.IDLE
         self._seconds_left = 0
+        self._sessions_completed = 0
+        self._pomodoros_until_long_break = 4
         self.setMinimumSize(240, 240)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
-    def set_state(self, fraction: float, phase: Phase, seconds_left: int) -> None:
+    def set_state(
+        self,
+        fraction: float,
+        phase: Phase,
+        seconds_left: int,
+        sessions_completed: int = 0,
+        pomodoros_until_long_break: int = 4,
+    ) -> None:
         self._fraction = fraction
         self._phase = phase
         self._seconds_left = seconds_left
+        self._sessions_completed = sessions_completed
+        self._pomodoros_until_long_break = pomodoros_until_long_break
         self.update()
 
     def paintEvent(self, event) -> None:
@@ -60,7 +73,12 @@ class _ArcWidget(QWidget):
 
         # Progress arc (depletes clockwise from top)
         if self._fraction > 0:
-            color = _COLOR_BREAK if self._phase == Phase.BREAK else _COLOR_WORK
+            if self._phase == Phase.BREAK:
+                color = _COLOR_BREAK
+            elif self._phase == Phase.LONG_BREAK:
+                color = _COLOR_LONG_BREAK
+            else:
+                color = _COLOR_WORK
             pen = QPen(color, _ARC_WIDTH)
             pen.setCapStyle(Qt.PenCapStyle.FlatCap)
             p.setPen(pen)
@@ -74,7 +92,18 @@ class _ArcWidget(QWidget):
         p.setPen(QPen(_COLOR_TEXT))
         font = QFont("Monospace", 28, QFont.Weight.Bold)
         p.setFont(font)
-        p.drawText(rect, Qt.AlignmentFlag.AlignCenter, label)
+        time_rect = QRect(rect.x(), rect.y() - 12, rect.width(), rect.height())
+        p.drawText(time_rect, Qt.AlignmentFlag.AlignCenter, label)
+
+        # Session dots (N filled + remaining empty circles)
+        n = self._pomodoros_until_long_break
+        done = self._sessions_completed % n
+        dots = "●" * done + "○" * (n - done)
+        p.setPen(QPen(_COLOR_DIM))
+        font_dots = QFont("Monospace", 11)
+        p.setFont(font_dots)
+        dots_rect = QRect(rect.x(), rect.y() + 22, rect.width(), rect.height())
+        p.drawText(dots_rect, Qt.AlignmentFlag.AlignCenter, dots)
 
         p.end()
 
@@ -94,7 +123,13 @@ class MainWindow(QMainWindow):
 
         # Widgets
         self._arc = _ArcWidget()
-        self._arc.set_state(1.0, Phase.IDLE, timer.work_duration)
+        self._arc.set_state(
+            1.0,
+            Phase.IDLE,
+            timer.work_duration,
+            timer.sessions_completed,
+            timer.pomodoros_until_long_break,
+        )
 
         self._btn_start = QPushButton("Start")
         self._btn_start.setFixedSize(100, 40)
@@ -145,11 +180,20 @@ class MainWindow(QMainWindow):
 
     def _on_tick(self, seconds_left: int) -> None:
         fraction = seconds_left / self._total_seconds if self._total_seconds else 0
-        self._arc.set_state(fraction, self._timer.phase, seconds_left)
+        self._arc.set_state(
+            fraction,
+            self._timer.phase,
+            seconds_left,
+            self._timer.sessions_completed,
+            self._timer.pomodoros_until_long_break,
+        )
 
     def _on_phase_ended(self, phase: str) -> None:
         if phase == "work":
-            self._total_seconds = self._timer.break_duration
+            if self._timer.next_is_long_break:
+                self._total_seconds = self._timer.long_break_duration
+            else:
+                self._total_seconds = self._timer.break_duration
         else:
             self._total_seconds = self._timer.work_duration
         self._btn_start.setText("Stop")
@@ -157,7 +201,13 @@ class MainWindow(QMainWindow):
 
     def _on_stopped(self) -> None:
         self._total_seconds = self._timer.work_duration
-        self._arc.set_state(1.0, Phase.IDLE, self._timer.work_duration)
+        self._arc.set_state(
+            1.0,
+            Phase.IDLE,
+            self._timer.work_duration,
+            self._timer.sessions_completed,
+            self._timer.pomodoros_until_long_break,
+        )
         self._btn_start.setText("Start")
         self._btn_start.setStyleSheet(self._btn_style(_COLOR_WORK))
         self._btn_pause.setVisible(False)
@@ -165,7 +215,14 @@ class MainWindow(QMainWindow):
 
     def _on_paused(self) -> None:
         self._btn_pause.setText("Resume")
-        self._btn_pause.setStyleSheet(self._btn_style(_COLOR_WORK if self._timer._phase_before_pause == Phase.WORK else _COLOR_BREAK))
+        prev = self._timer._phase_before_pause
+        if prev == Phase.LONG_BREAK:
+            color = _COLOR_LONG_BREAK
+        elif prev == Phase.BREAK:
+            color = _COLOR_BREAK
+        else:
+            color = _COLOR_WORK
+        self._btn_pause.setStyleSheet(self._btn_style(color))
 
     def _on_resumed(self) -> None:
         self._btn_pause.setText("Pause")
@@ -197,6 +254,8 @@ class MainWindow(QMainWindow):
             self._timer.update_durations(
                 self._cfg["work_duration"],
                 self._cfg["break_duration"],
+                self._cfg["long_break_duration"],
+                self._cfg["pomodoros_until_long_break"],
             )
             if self._notifier:
                 self._notifier.set_volume(self._cfg["volume"])

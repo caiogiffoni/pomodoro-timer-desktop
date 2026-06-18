@@ -4,7 +4,7 @@ from pathlib import Path
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
-from app import config
+from app import config, stats
 from app.notifier import Notifier
 from app.timer import PomodoroTimer
 from app.tray import TrayIcon
@@ -15,6 +15,7 @@ _ASSETS = Path(__file__).parent / "assets"
 _MESSAGES = {
     "work": ("Work session done!", "Time for a break."),
     "break": ("Break over!", "Back to work."),
+    "long_break": ("Long break over!", "Back to work."),
 }
 
 
@@ -30,6 +31,8 @@ def main() -> None:
     timer = PomodoroTimer(
         work_minutes=cfg["work_duration"],
         break_minutes=cfg["break_duration"],
+        long_break_minutes=cfg["long_break_duration"],
+        pomodoros_until_long_break=cfg["pomodoros_until_long_break"],
     )
     notifier = Notifier(volume=cfg["volume"])
 
@@ -47,7 +50,10 @@ def main() -> None:
         title, body = _MESSAGES.get(phase, ("Pomodoro", "Phase ended."))
         notifier.play_sound(cfg["selected_sound"])
         notifier.notify(title, body)
-        if phase == "break":
+        if phase == "work":
+            stats.record_session()
+            tray._update_stats_label()
+        elif phase in ("break", "long_break"):
             notifier.start_repeating(cfg["selected_sound"], cfg["repeat_interval"])
             tray.set_alarm_active(True)
 

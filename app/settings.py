@@ -58,6 +58,17 @@ class SettingsDialog(QDialog):
         self._spin_break.setSuffix(" min")
         self._spin_break.setValue(cfg["break_duration"])
 
+        # --- Long break duration ---
+        self._spin_long_break = QSpinBox()
+        self._spin_long_break.setRange(1, 120)
+        self._spin_long_break.setSuffix(" min")
+        self._spin_long_break.setValue(cfg.get("long_break_duration", 15))
+
+        # --- Pomodoros until long break ---
+        self._spin_pomodoros = QSpinBox()
+        self._spin_pomodoros.setRange(1, 10)
+        self._spin_pomodoros.setValue(cfg.get("pomodoros_until_long_break", 4))
+
         # --- Repeat interval ---
         self._spin_repeat = QSpinBox()
         self._spin_repeat.setRange(5, 300)
@@ -101,6 +112,8 @@ class SettingsDialog(QDialog):
         form = QFormLayout()
         form.addRow("Work duration:", self._spin_work)
         form.addRow("Break duration:", self._spin_break)
+        form.addRow("Long break duration:", self._spin_long_break)
+        form.addRow("Long break every:", self._spin_pomodoros)
         form.addRow("Volume:", vol_row)
         form.addRow("Alarm sound:", sound_row)
         form.addRow("Repeat alarm every:", self._spin_repeat)
@@ -126,6 +139,8 @@ class SettingsDialog(QDialog):
             **self._cfg,
             "work_duration": self._spin_work.value(),
             "break_duration": self._spin_break.value(),
+            "long_break_duration": self._spin_long_break.value(),
+            "pomodoros_until_long_break": self._spin_pomodoros.value(),
             "volume": self._slider_vol.value(),
             "selected_sound": self._cfg["selected_sound"],
             "repeat_interval": self._spin_repeat.value(),

@@ -9,6 +9,8 @@ _SOUNDS_DIR = _CONFIG_DIR / "sounds"
 _DEFAULTS = {
     "work_duration": 25,
     "break_duration": 5,
+    "long_break_duration": 15,
+    "pomodoros_until_long_break": 4,
     "volume": 80,
     "selected_sound": str(_SOUNDS_DIR / "default.wav"),
     "repeat_interval": 30,

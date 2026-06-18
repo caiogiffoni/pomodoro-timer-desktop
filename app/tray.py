@@ -41,6 +41,7 @@ class TrayIcon(QSystemTrayIcon):
         self._static_icon = icon
         self._icon_work = _make_phase_icon(icon, QColor("#D85A30"))
         self._icon_break = _make_phase_icon(icon, QColor("#1D9E75"))
+        self._icon_long_break = _make_phase_icon(icon, QColor("#5B6AE8"))
 
         self.setToolTip("Pomodoro")
         self._build_menu()
@@ -65,6 +66,10 @@ class TrayIcon(QSystemTrayIcon):
 
         self._act_time_label = menu.addAction("Not running")
         self._act_time_label.setEnabled(False)
+
+        self._act_stats_label = menu.addAction("")
+        self._act_stats_label.setEnabled(False)
+        self._update_stats_label()
 
         menu.addSeparator()
 
@@ -96,10 +101,11 @@ class TrayIcon(QSystemTrayIcon):
         act_quit.triggered.connect(self._on_quit)
 
         menu.aboutToShow.connect(self._update_time_label)
+        menu.aboutToShow.connect(self._update_stats_label)
         self.setContextMenu(menu)
 
     def _update_actions(self) -> None:
-        active = self._timer.phase in (Phase.WORK, Phase.BREAK)
+        active = self._timer.phase in (Phase.WORK, Phase.BREAK, Phase.LONG_BREAK)
         paused = self._timer.phase == Phase.PAUSED
         idle = self._timer.phase in (Phase.IDLE, Phase.STOPPED)
         self._act_start.setEnabled(idle)
@@ -110,14 +116,14 @@ class TrayIcon(QSystemTrayIcon):
 
     def _update_time_label(self) -> None:
         phase = self._timer.phase
+        minutes, seconds = divmod(self._timer.seconds_left, 60)
         if phase == Phase.WORK:
-            minutes, seconds = divmod(self._timer.seconds_left, 60)
             self._act_time_label.setText(f"Work  {minutes:02d}:{seconds:02d}")
         elif phase == Phase.BREAK:
-            minutes, seconds = divmod(self._timer.seconds_left, 60)
             self._act_time_label.setText(f"Break  {minutes:02d}:{seconds:02d}")
+        elif phase == Phase.LONG_BREAK:
+            self._act_time_label.setText(f"Long break  {minutes:02d}:{seconds:02d}")
         elif phase == Phase.PAUSED:
-            minutes, seconds = divmod(self._timer.seconds_left, 60)
             self._act_time_label.setText(f"Paused  {minutes:02d}:{seconds:02d}")
         else:
             self._act_time_label.setText("Not running")
@@ -128,16 +134,27 @@ class TrayIcon(QSystemTrayIcon):
 
     def _on_tick(self, seconds_left: int) -> None:
         phase = self._timer.phase
-        label = "Work" if phase == Phase.WORK else "Break"
         minutes, seconds = divmod(seconds_left, 60)
+        if phase == Phase.WORK:
+            label, icon = "Work", self._icon_work
+        elif phase == Phase.LONG_BREAK:
+            label, icon = "Long break", self._icon_long_break
+        else:
+            label, icon = "Break", self._icon_break
         self.setToolTip(f"Pomodoro — {label} {minutes:02d}:{seconds:02d}")
-        self.setIcon(self._icon_work if phase == Phase.WORK else self._icon_break)
+        self.setIcon(icon)
         self._update_actions()
 
     def _on_stopped(self) -> None:
         self.setToolTip("Pomodoro")
         self.setIcon(self._static_icon)
         self._update_actions()
+        self._update_stats_label()
+
+    def _update_stats_label(self) -> None:
+        from app import stats
+        n = stats.today_count()
+        self._act_stats_label.setText(f"Today: {n} pomodoro{'s' if n != 1 else ''}")
 
     def _on_show(self) -> None:
         self._window.showNormal()

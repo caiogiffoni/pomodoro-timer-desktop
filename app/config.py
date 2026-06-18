@@ -5,6 +5,7 @@ from pathlib import Path
 _CONFIG_DIR = Path.home() / ".config" / "pomodoro"
 _CONFIG_FILE = _CONFIG_DIR / "config.json"
 _SOUNDS_DIR = _CONFIG_DIR / "sounds"
+_DESKTOP_FILE = Path.home() / ".local" / "share" / "applications" / "pomodoro.desktop"
 
 _DEFAULTS = {
     "work_duration": 25,
@@ -36,6 +37,23 @@ def seed(assets_dir: Path) -> None:
                 shutil.copy2(src, dest)
     if not _CONFIG_FILE.exists():
         _CONFIG_FILE.write_text(json.dumps(_DEFAULTS, indent=2))
+
+
+def install_desktop_file(main_py: Path, icon_path: Path) -> None:
+    """Write ~/.local/share/applications/pomodoro.desktop so GNOME dock shows the correct icon."""
+    _DESKTOP_FILE.parent.mkdir(parents=True, exist_ok=True)
+    content = (
+        "[Desktop Entry]\n"
+        "Version=1.0\n"
+        "Name=Pomodoro Timer\n"
+        "Type=Application\n"
+        f"Exec=uv run python {main_py.resolve()}\n"
+        f"Icon={icon_path.resolve()}\n"
+        "Terminal=false\n"
+        "StartupWMClass=Pomodoro\n"
+        "Categories=Utility;\n"
+    )
+    _DESKTOP_FILE.write_text(content)
 
 
 def load() -> dict:

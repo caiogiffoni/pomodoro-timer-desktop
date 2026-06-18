@@ -25,9 +25,12 @@ def main() -> None:
     app.setQuitOnLastWindowClosed(False)
 
     config.seed(_ASSETS)
+    config.install_desktop_file(Path(__file__), _ASSETS / "icon.png")
+    app.setDesktopFileName("pomodoro")
     cfg = config.load()
 
     icon = QIcon(str(_ASSETS / "icon.png"))
+    app.setWindowIcon(icon)
     timer = PomodoroTimer(
         work_minutes=cfg["work_duration"],
         break_minutes=cfg["break_duration"],

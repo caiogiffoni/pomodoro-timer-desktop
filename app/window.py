@@ -2,9 +2,13 @@ from PyQt6.QtCore import Qt, QEvent, QRect
 from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QPen
 from PyQt6.QtWidgets import (
     QHBoxLayout,
+    QLabel,
+    QListWidget,
     QMainWindow,
     QPushButton,
     QSizePolicy,
+    QStackedWidget,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -108,6 +112,211 @@ class _ArcWidget(QWidget):
         p.end()
 
 
+class _ChartWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._data: list[tuple[str, int]] = []
+        self._is_current = True
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    def set_data(self, data: list[tuple[str, int]], is_current: bool = True) -> None:
+        self._data = data
+        self._is_current = is_current
+        self.update()
+
+    def paintEvent(self, event) -> None:
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        w, h = self.width(), self.height()
+        p.fillRect(0, 0, w, h, _COLOR_BG)
+
+        if not self._data:
+            p.end()
+            return
+
+        n = len(self._data)
+        margin_x = 20
+        margin_top = 32
+        margin_bottom = 36
+        bar_area_h = h - margin_top - margin_bottom
+        max_count = max(c for _, c in self._data) or 1
+        col_w = (w - margin_x * 2) / n
+        bar_w = col_w * 0.5
+
+        for i, (day, count) in enumerate(self._data):
+            cx = margin_x + (i + 0.5) * col_w
+            bar_x = cx - bar_w / 2
+            is_today = self._is_current and (i == n - 1)
+
+            bar_h = max((count / max_count) * bar_area_h, 4) if count > 0 else 0
+            bar_y = margin_top + bar_area_h - bar_h
+
+            if count > 0:
+                color = _COLOR_WORK.lighter(120) if is_today else _COLOR_WORK
+                p.setBrush(color)
+                p.setPen(Qt.PenStyle.NoPen)
+                p.drawRoundedRect(int(bar_x), int(bar_y), int(bar_w), int(bar_h), 3, 3)
+                p.setPen(QPen(_COLOR_TEXT))
+                p.setFont(QFont("Monospace", 9, QFont.Weight.Bold))
+                p.drawText(
+                    QRect(int(bar_x - 8), int(bar_y) - 20, int(bar_w + 16), 18),
+                    Qt.AlignmentFlag.AlignCenter,
+                    str(count),
+                )
+
+            label_color = _COLOR_TEXT if is_today else _COLOR_DIM
+            p.setPen(QPen(label_color))
+            p.setFont(QFont("Monospace", 8))
+            p.drawText(
+                QRect(int(cx - col_w / 2), h - margin_bottom + 6, int(col_w), 22),
+                Qt.AlignmentFlag.AlignCenter,
+                day,
+            )
+
+        p.end()
+
+
+_NAV_BTN = (
+    "QPushButton { background: #2E2E2E; color: #F0F0F0; border: none;"
+    " border-radius: 4px; font-size: 14px; padding: 2px 8px; }"
+    "QPushButton:hover { background: #3A3A3A; }"
+    "QPushButton:disabled { color: #3A3A3A; }"
+)
+_TOGGLE_ON = (
+    "QPushButton { background: #D85A30; color: white; border: none;"
+    " padding: 3px 16px; border-radius: 3px; font-size: 11px; }"
+)
+_TOGGLE_OFF = (
+    "QPushButton { background: #2E2E2E; color: #888888; border: none;"
+    " padding: 3px 16px; border-radius: 3px; font-size: 11px; }"
+    "QPushButton:hover { color: #CCCCCC; }"
+)
+
+
+class _StatsWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._offset = 0
+
+        self._btn_chart_toggle = QPushButton("Chart")
+        self._btn_list_toggle = QPushButton("List")
+        self._btn_chart_toggle.setStyleSheet(_TOGGLE_ON)
+        self._btn_list_toggle.setStyleSheet(_TOGGLE_OFF)
+        self._btn_chart_toggle.clicked.connect(self._show_chart)
+        self._btn_list_toggle.clicked.connect(self._show_list)
+
+        toggle_row = QHBoxLayout()
+        toggle_row.addStretch()
+        toggle_row.addWidget(self._btn_chart_toggle)
+        toggle_row.addWidget(self._btn_list_toggle)
+        toggle_row.addStretch()
+
+        # chart page
+        self._chart = _ChartWidget()
+
+        self._week_label = QLabel("Last 7 days")
+        self._week_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._week_label.setStyleSheet("color: #888888; font-size: 11px;")
+
+        self._btn_prev = QPushButton("←")
+        self._btn_prev.setFixedSize(32, 26)
+        self._btn_prev.setStyleSheet(_NAV_BTN)
+        self._btn_prev.clicked.connect(self._go_prev)
+
+        self._btn_next = QPushButton("→")
+        self._btn_next.setFixedSize(32, 26)
+        self._btn_next.setStyleSheet(_NAV_BTN)
+        self._btn_next.clicked.connect(self._go_next)
+        self._btn_next.setEnabled(False)
+
+        nav_row = QHBoxLayout()
+        nav_row.addWidget(self._btn_prev)
+        nav_row.addStretch()
+        nav_row.addWidget(self._week_label)
+        nav_row.addStretch()
+        nav_row.addWidget(self._btn_next)
+
+        chart_page = QWidget()
+        chart_vbox = QVBoxLayout()
+        chart_vbox.setContentsMargins(8, 4, 8, 8)
+        chart_vbox.addWidget(self._chart)
+        chart_vbox.addLayout(nav_row)
+        chart_page.setLayout(chart_vbox)
+
+        # list page
+        self._list = QListWidget()
+        self._list.setStyleSheet("""
+            QListWidget {
+                background: #1A1A1A; color: #F0F0F0; border: none;
+                font-family: Monospace; font-size: 12px;
+            }
+            QListWidget::item { padding: 7px 14px; }
+            QListWidget::item:alternate { background: #222222; }
+            QScrollBar:vertical { background: #1A1A1A; width: 6px; border: none; }
+            QScrollBar::handle:vertical { background: #444444; border-radius: 3px; }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+        """)
+        self._list.setAlternatingRowColors(True)
+        self._list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+
+        self._stack = QStackedWidget()
+        self._stack.addWidget(chart_page)
+        self._stack.addWidget(self._list)
+
+        vbox = QVBoxLayout()
+        vbox.setContentsMargins(0, 6, 0, 0)
+        vbox.addLayout(toggle_row)
+        vbox.addWidget(self._stack)
+        self.setLayout(vbox)
+
+        self.refresh()
+
+    def refresh(self) -> None:
+        from datetime import date, timedelta
+        from app import stats
+
+        data = stats.last_7_days(self._offset)
+        self._chart.set_data(data, is_current=(self._offset == 0))
+
+        end = date.today() - timedelta(weeks=self._offset)
+        start = end - timedelta(days=6)
+        self._week_label.setText(
+            "Last 7 days" if self._offset == 0
+            else f"{start.strftime('%b %d')} – {end.strftime('%b %d')}"
+        )
+
+        self._list.clear()
+        today_iso = date.today().isoformat()
+        for iso_date, count in stats.all_days():
+            try:
+                d = date.fromisoformat(iso_date)
+                suffix = "  (today)" if iso_date == today_iso else ""
+                label = f"{d.strftime('%b %d')}  {d.strftime('%a')}{suffix}  —  {count}"
+            except ValueError:
+                label = f"{iso_date}  —  {count}"
+            self._list.addItem(label)
+
+    def _go_prev(self) -> None:
+        self._offset += 1
+        self._btn_next.setEnabled(True)
+        self.refresh()
+
+    def _go_next(self) -> None:
+        self._offset = max(0, self._offset - 1)
+        self._btn_next.setEnabled(self._offset > 0)
+        self.refresh()
+
+    def _show_chart(self) -> None:
+        self._stack.setCurrentIndex(0)
+        self._btn_chart_toggle.setStyleSheet(_TOGGLE_ON)
+        self._btn_list_toggle.setStyleSheet(_TOGGLE_OFF)
+
+    def _show_list(self) -> None:
+        self._stack.setCurrentIndex(1)
+        self._btn_list_toggle.setStyleSheet(_TOGGLE_ON)
+        self._btn_chart_toggle.setStyleSheet(_TOGGLE_OFF)
+
+
 class MainWindow(QMainWindow):
     def __init__(self, timer: PomodoroTimer, icon: QIcon, cfg: dict, notifier=None, parent=None):
         super().__init__(parent)
@@ -118,7 +327,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Pomodoro")
         self.setWindowIcon(icon)
-        self.setFixedSize(300, 360)
+        self.setFixedSize(300, 380)
         self.setStyleSheet(f"background-color: {_COLOR_BG.name()};")
 
         # Widgets
@@ -163,9 +372,26 @@ class MainWindow(QMainWindow):
         vbox.addWidget(self._arc, alignment=Qt.AlignmentFlag.AlignHCenter)
         vbox.addLayout(btn_row)
 
-        container = QWidget()
-        container.setLayout(vbox)
-        self.setCentralWidget(container)
+        timer_page = QWidget()
+        timer_page.setLayout(vbox)
+
+        self._stats_page = _StatsWidget()
+
+        tabs = QTabWidget()
+        tabs.setStyleSheet("""
+            QTabWidget::pane { border: none; }
+            QTabBar::tab {
+                background: #2E2E2E; color: #888888;
+                padding: 6px 24px; border: none;
+            }
+            QTabBar::tab:selected { background: #1A1A1A; color: #F0F0F0; }
+            QTabBar::tab:hover { background: #3A3A3A; color: #CCCCCC; }
+        """)
+        tabs.addTab(timer_page, "Timer")
+        tabs.addTab(self._stats_page, "Stats")
+        tabs.currentChanged.connect(self._on_tab_changed)
+
+        self.setCentralWidget(tabs)
 
         # Signals
         timer.tick.connect(self._on_tick)
@@ -188,12 +414,17 @@ class MainWindow(QMainWindow):
             self._timer.pomodoros_until_long_break,
         )
 
+    def _on_tab_changed(self, index: int) -> None:
+        if index == 1:
+            self._stats_page.refresh()
+
     def _on_phase_ended(self, phase: str) -> None:
         if phase == "work":
             if self._timer.next_is_long_break:
                 self._total_seconds = self._timer.long_break_duration
             else:
                 self._total_seconds = self._timer.break_duration
+            self._stats_page.refresh()
         else:
             self._total_seconds = self._timer.work_duration
         self._btn_start.setText("Stop")

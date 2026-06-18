@@ -33,3 +33,17 @@ def today_count() -> int:
 
 def all_time_count() -> int:
     return sum(_load().values())
+
+
+def last_7_days(week_offset: int = 0) -> list[tuple[str, int]]:
+    from datetime import timedelta
+    data = _load()
+    end = date.today() - timedelta(weeks=week_offset)
+    return [
+        ((end - timedelta(days=i)).strftime("%a"), data.get((end - timedelta(days=i)).isoformat(), 0))
+        for i in range(6, -1, -1)
+    ]
+
+
+def all_days() -> list[tuple[str, int]]:
+    return sorted(_load().items(), reverse=True)

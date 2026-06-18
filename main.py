@@ -36,6 +36,7 @@ def main() -> None:
         break_minutes=cfg["break_duration"],
         long_break_minutes=cfg["long_break_duration"],
         pomodoros_until_long_break=cfg["pomodoros_until_long_break"],
+        auto_start_break=cfg.get("auto_start_break", False),
     )
     notifier = Notifier(volume=cfg["volume"])
 

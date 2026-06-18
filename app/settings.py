@@ -4,6 +4,7 @@ from pathlib import Path
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
@@ -69,6 +70,10 @@ class SettingsDialog(QDialog):
         self._spin_pomodoros.setRange(1, 10)
         self._spin_pomodoros.setValue(cfg.get("pomodoros_until_long_break", 4))
 
+        # --- Auto-start break ---
+        self._chk_auto_break = QCheckBox()
+        self._chk_auto_break.setChecked(cfg.get("auto_start_break", False))
+
         # --- Repeat interval ---
         self._spin_repeat = QSpinBox()
         self._spin_repeat.setRange(5, 300)
@@ -117,6 +122,7 @@ class SettingsDialog(QDialog):
         form.addRow("Volume:", vol_row)
         form.addRow("Alarm sound:", sound_row)
         form.addRow("Repeat alarm every:", self._spin_repeat)
+        form.addRow("Auto-start break:", self._chk_auto_break)
 
         # --- Buttons ---
         buttons = QDialogButtonBox(
@@ -144,6 +150,7 @@ class SettingsDialog(QDialog):
             "volume": self._slider_vol.value(),
             "selected_sound": self._cfg["selected_sound"],
             "repeat_interval": self._spin_repeat.value(),
+            "auto_start_break": self._chk_auto_break.isChecked(),
         }
 
     # ------------------------------------------------------------------

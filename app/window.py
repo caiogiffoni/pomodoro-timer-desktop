@@ -431,16 +431,30 @@ class MainWindow(QMainWindow):
         self._btn_start.setStyleSheet(self._btn_style(_COLOR_STOP))
 
     def _on_stopped(self) -> None:
-        self._total_seconds = self._timer.work_duration
-        self._arc.set_state(
-            1.0,
-            Phase.IDLE,
-            self._timer.work_duration,
-            self._timer.sessions_completed,
-            self._timer.pomodoros_until_long_break,
-        )
-        self._btn_start.setText("Start")
-        self._btn_start.setStyleSheet(self._btn_style(_COLOR_WORK))
+        pending = self._timer.pending_break
+        if pending is not None:
+            duration = (
+                self._timer.long_break_duration if pending == Phase.LONG_BREAK
+                else self._timer.break_duration
+            )
+            arc_color = _COLOR_LONG_BREAK if pending == Phase.LONG_BREAK else _COLOR_BREAK
+            self._total_seconds = duration
+            self._arc.set_state(
+                1.0, pending, duration,
+                self._timer.sessions_completed,
+                self._timer.pomodoros_until_long_break,
+            )
+            self._btn_start.setText("Start Break")
+            self._btn_start.setStyleSheet(self._btn_style(arc_color))
+        else:
+            self._total_seconds = self._timer.work_duration
+            self._arc.set_state(
+                1.0, Phase.IDLE, self._timer.work_duration,
+                self._timer.sessions_completed,
+                self._timer.pomodoros_until_long_break,
+            )
+            self._btn_start.setText("Start")
+            self._btn_start.setStyleSheet(self._btn_style(_COLOR_WORK))
         self._btn_pause.setVisible(False)
         self._btn_pause.setText("Pause")
 
@@ -461,7 +475,14 @@ class MainWindow(QMainWindow):
 
     def _on_start_stop(self) -> None:
         if self._timer.phase in (Phase.IDLE, Phase.STOPPED):
-            self._total_seconds = self._timer.work_duration
+            pending = self._timer.pending_break
+            if pending is not None:
+                self._total_seconds = (
+                    self._timer.long_break_duration if pending == Phase.LONG_BREAK
+                    else self._timer.break_duration
+                )
+            else:
+                self._total_seconds = self._timer.work_duration
             self._timer.start()
             self._btn_start.setText("Stop")
             self._btn_start.setStyleSheet(self._btn_style(_COLOR_STOP))
@@ -488,6 +509,7 @@ class MainWindow(QMainWindow):
                 self._cfg["long_break_duration"],
                 self._cfg["pomodoros_until_long_break"],
             )
+            self._timer.auto_start_break = self._cfg.get("auto_start_break", False)
             if self._notifier:
                 self._notifier.set_volume(self._cfg["volume"])
 

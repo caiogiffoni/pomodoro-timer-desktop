@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QApplication
 
 from app import config, stats
 from app.notifier import Notifier
+from app.session_review import SessionReviewDialog
 from app.timer import PomodoroTimer
 from app.tray import TrayIcon
 from app.window import MainWindow
@@ -36,7 +37,7 @@ def main() -> None:
         break_minutes=cfg["break_duration"],
         long_break_minutes=cfg["long_break_duration"],
         pomodoros_until_long_break=cfg["pomodoros_until_long_break"],
-        auto_start_break=cfg.get("auto_start_break", False),
+        auto_start_break=cfg.get("auto_start_break", True),
     )
     notifier = Notifier(volume=cfg["volume"])
 
@@ -55,12 +56,25 @@ def main() -> None:
         notifier.play_sound(cfg["selected_sound"])
         notifier.notify(title, body)
         if phase == "work":
-            stats.record_session()
+            session_id = stats.record_session()
             tray._update_stats_label()
+            if session_id is not None:
+                dlg = SessionReviewDialog(window)
+                if dlg.exec():
+                    stats.update_session(session_id, dlg.notes, dlg.tag, dlg.focus_score)
         elif phase in ("break", "long_break"):
             notifier.start_repeating(cfg["selected_sound"], cfg["repeat_interval"])
             tray.set_alarm_active(True)
 
+    def on_phase_started(phase: str) -> None:
+        if phase == "work":
+            pomodoro_num = (timer.sessions_completed % timer.pomodoros_until_long_break) + 1
+            stats.begin_session(
+                planned_duration_seconds=timer.work_duration,
+                pomodoro_number=pomodoro_num,
+            )
+
+    timer.phase_started.connect(on_phase_started)
     timer.phase_ended.connect(on_phase_ended)
     timer.tick.connect(stop_alarm)
 

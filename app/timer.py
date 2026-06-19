@@ -13,8 +13,9 @@ class Phase(Enum):
 
 
 class PomodoroTimer(QObject):
-    tick = pyqtSignal(int)         # seconds remaining
-    phase_ended = pyqtSignal(str)  # "work", "break", or "long_break"
+    tick = pyqtSignal(int)           # seconds remaining
+    phase_started = pyqtSignal(str)  # "work", "break", or "long_break"
+    phase_ended = pyqtSignal(str)    # "work", "break", or "long_break"
     paused = pyqtSignal()
     resumed = pyqtSignal()
     stopped = pyqtSignal()
@@ -145,18 +146,21 @@ class PomodoroTimer(QObject):
     def _enter_work(self) -> None:
         self._phase = Phase.WORK
         self._seconds_left = self.work_duration
+        self.phase_started.emit("work")
         self.tick.emit(self._seconds_left)
         self._qtimer.start()
 
     def _enter_break(self) -> None:
         self._phase = Phase.BREAK
         self._seconds_left = self.break_duration
+        self.phase_started.emit("break")
         self.tick.emit(self._seconds_left)
         self._qtimer.start()
 
     def _enter_long_break(self) -> None:
         self._phase = Phase.LONG_BREAK
         self._seconds_left = self.long_break_duration
+        self.phase_started.emit("long_break")
         self.tick.emit(self._seconds_left)
         self._qtimer.start()
 

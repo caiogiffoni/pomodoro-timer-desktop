@@ -15,7 +15,7 @@ _DEFAULTS = {
     "volume": 80,
     "selected_sound": str(_SOUNDS_DIR / "default.wav"),
     "repeat_interval": 30,
-    "auto_start_break": False,
+    "auto_start_break": True,
     "daily_goal": 0,
 }
 
@@ -39,6 +39,8 @@ def seed(assets_dir: Path) -> None:
                 shutil.copy2(src, dest)
     if not _CONFIG_FILE.exists():
         _CONFIG_FILE.write_text(json.dumps(_DEFAULTS, indent=2))
+    from app import stats
+    stats.init_db()
 
 
 def install_desktop_file(main_py: Path, icon_path: Path) -> None:

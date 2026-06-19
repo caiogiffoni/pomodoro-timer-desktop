@@ -38,7 +38,8 @@ pomodoro
 │   ├── notifier.py      # QMediaPlayer + notify-send
 │   ├── settings.py      # QDialog: durations, volume, sound picker, goal
 │   ├── config.py        # load/save ~/.config/pomodoro/config.json
-│   └── stats.py         # record/query ~/.config/pomodoro/stats.json
+│   ├── stats.py         # record/query ~/.config/pomodoro/pomodoro.db
+│   └── session_review.py # post-session dialog: notes, tag, focus score
 ├── assets/
 │   ├── icon.png         # tomato icon (generated via QPainter)
 │   ├── alarm.wav        # 3-beep ascending tone
@@ -65,7 +66,7 @@ Any active/paused state → STOPPED → IDLE
 
 **Config** persists to `~/.config/pomodoro/config.json`. First launch seeds the sounds dir and copies all four bundled `.wav` files.
 
-**Stats** persists to `~/.config/pomodoro/pomodoro.db` (SQLite). One row per work session with `started_at` (when work began) and `completed_at` (when it finished; NULL if stopped early). `stats.begin_session()` is called on `phase_started("work")`; `stats.record_session()` is called on `phase_ended("work")`. Historical `stats.json` is migrated on first launch and renamed to `stats.json.bak`. The Stats tab reads `stats.last_7_days()` to render a bar chart.
+**Stats** persists to `~/.config/pomodoro/pomodoro.db` (SQLite). One row per work session. `stats.begin_session(planned_duration_seconds, pomodoro_number)` is called on `phase_started("work")` and inserts the row with `started_at` and computed `day_session_index`. `stats.record_session()` is called on `phase_ended("work")`, sets `completed_at`, and returns the `session_id`. A `SessionReviewDialog` then prompts for optional `notes`, `tag`, and `focus_score`, saved via `stats.update_session()`. Sessions stopped early keep `completed_at = NULL` and are excluded from all counts. Historical `stats.json` is migrated on first launch and renamed to `stats.json.bak`.
 
 **Colors:** work = `#D85A30`, break = `#1D9E75`, stop button = `#C0392B`.
 
@@ -89,10 +90,16 @@ Any active/paused state → STOPPED → IDLE
 
 ```sql
 CREATE TABLE sessions (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    date         TEXT NOT NULL,      -- ISO-8601 date, e.g. '2026-06-19'
-    started_at   TEXT NOT NULL,      -- UTC datetime, e.g. '2026-06-19T14:00:00'
-    completed_at TEXT                -- NULL if session was stopped early
+    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+    date                     TEXT NOT NULL,   -- ISO-8601 date, e.g. '2026-06-19'
+    started_at               TEXT NOT NULL,   -- UTC datetime when work began
+    completed_at             TEXT,            -- UTC datetime when done; NULL if stopped early
+    planned_duration_seconds INTEGER,         -- work_duration setting at session start
+    pomodoro_number          INTEGER,         -- 1–N position in the current cycle
+    day_session_index        INTEGER,         -- nth completed session of the day
+    notes                    TEXT,            -- user note from post-session dialog
+    tag                      TEXT,            -- category label (Coding, Reading, etc.)
+    focus_score              INTEGER          -- self-rated 1–5 focus quality
 );
 ```
 

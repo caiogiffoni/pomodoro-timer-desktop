@@ -16,8 +16,9 @@ A Pomodoro timer desktop app for Ubuntu (Linux) built with Python + PyQt6.
 - 4 bundled alarm sounds: default beeps, bell, digital, soft chime
 - Stats tab: 7-day bar chart with week navigation + scrollable full history list
 - Streak tracking and daily goal progress
+- Post-session review: log what you worked on, tag it, and rate your focus (1–5)
 - Config persists to `~/.config/pomodoro/config.json`
-- Daily session stats tracked in `~/.config/pomodoro/stats.json`
+- Session stats tracked in `~/.config/pomodoro/pomodoro.db` (SQLite)
 
 ## Requirements
 
@@ -60,13 +61,14 @@ Bundled sounds are copied to `~/.config/pomodoro/sounds/` on first launch and ar
 
 ## Stats
 
-Each completed work session is recorded in `~/.config/pomodoro/stats.json`, keyed by ISO date:
+Each work session is recorded in `~/.config/pomodoro/pomodoro.db` (SQLite). Completed sessions store:
 
-```json
-{
-  "2026-06-18": 3,
-  "2026-06-17": 1
-}
-```
+- `started_at` / `completed_at` — UTC timestamps
+- `planned_duration_seconds` — work duration at the time
+- `pomodoro_number` — position in the current cycle (1–4)
+- `day_session_index` — nth session of the day
+- `notes`, `tag`, `focus_score` — from the optional post-session review dialog
 
-The Stats tab in the main window shows a bar chart of the last 7 days. The tray context menu shows today's count.
+Sessions stopped early are kept with `completed_at = NULL` and excluded from counts. Existing `stats.json` data is migrated automatically on first launch.
+
+The Stats tab shows a 7-day bar chart and full history list. The tray context menu shows today's count.

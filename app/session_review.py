@@ -16,7 +16,13 @@ _PRESET_TAGS = ["Coding", "Writing", "Reading", "Learning", "Meetings", "Plannin
 
 
 class SessionReviewDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(
+        self,
+        parent=None,
+        prefill_notes: str | None = None,
+        prefill_tag: str | None = None,
+        prefill_focus: int | None = None,
+    ):
         super().__init__(parent)
         self.setWindowTitle("Session complete")
         self.setFixedWidth(340)
@@ -25,6 +31,8 @@ class SessionReviewDialog(QDialog):
 
         self._notes = QLineEdit()
         self._notes.setPlaceholderText("What did you work on? (optional)")
+        if prefill_notes:
+            self._notes.setText(prefill_notes)
 
         self._tag = QComboBox()
         self._tag.setEditable(True)
@@ -32,6 +40,12 @@ class SessionReviewDialog(QDialog):
         self._tag.addItems(_PRESET_TAGS)
         self._tag.setCurrentIndex(0)
         self._tag.lineEdit().setPlaceholderText("Tag (optional)")
+        if prefill_tag:
+            idx = self._tag.findText(prefill_tag)
+            if idx >= 0:
+                self._tag.setCurrentIndex(idx)
+            else:
+                self._tag.setCurrentText(prefill_tag)
 
         self._focus_group = QButtonGroup(self)
         focus_row = QHBoxLayout()
@@ -40,6 +54,10 @@ class SessionReviewDialog(QDialog):
             rb = QRadioButton(str(i))
             self._focus_group.addButton(rb, i)
             focus_row.addWidget(rb)
+        if prefill_focus is not None:
+            btn = self._focus_group.button(prefill_focus)
+            if btn:
+                btn.setChecked(True)
         focus_row.addStretch()
 
         form = QFormLayout()

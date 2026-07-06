@@ -59,7 +59,13 @@ def main() -> None:
             session_id = stats.record_session()
             tray._update_stats_label()
             if session_id is not None:
-                dlg = SessionReviewDialog(window)
+                prev_notes, prev_tag, prev_focus = stats.last_review_today(session_id)
+                dlg = SessionReviewDialog(
+                    window,
+                    prefill_notes=prev_notes,
+                    prefill_tag=prev_tag,
+                    prefill_focus=prev_focus,
+                )
                 if dlg.exec():
                     stats.update_session(session_id, dlg.notes, dlg.tag, dlg.focus_score)
         elif phase in ("break", "long_break"):

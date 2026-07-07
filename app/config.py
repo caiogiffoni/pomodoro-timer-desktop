@@ -15,6 +15,7 @@ _DEFAULTS = {
     "volume": 80,
     "selected_sound": str(_SOUNDS_DIR / "default.wav"),
     "repeat_interval": 30,
+    "alarm_timeout": 3,
     "auto_start_break": True,
     "daily_goal": 0,
 }

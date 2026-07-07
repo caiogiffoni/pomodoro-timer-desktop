@@ -16,6 +16,10 @@ class Notifier:
         self._repeat_path = ""
         self._repeat_timer.timeout.connect(lambda: self.play_sound(self._repeat_path))
 
+        self._stop_timer = QTimer()
+        self._stop_timer.setSingleShot(True)
+        self._stop_timer.timeout.connect(self.stop_repeating)
+
     def set_volume(self, volume: int) -> None:
         """volume: 0–100"""
         self._audio.setVolume(max(0, min(100, volume)) / 100.0)
@@ -27,13 +31,18 @@ class Notifier:
         self._player.setSource(QUrl.fromLocalFile(str(p)))
         self._player.play()
 
-    def start_repeating(self, path: str, interval_seconds: int) -> None:
+    def start_repeating(self, path: str, interval_seconds: int, timeout_seconds: int = 0) -> None:
         self._repeat_path = path
         self._repeat_timer.setInterval(max(1, interval_seconds) * 1000)
         self._repeat_timer.start()
+        if timeout_seconds > 0:
+            self._stop_timer.start(timeout_seconds * 1000)
+        else:
+            self._stop_timer.stop()
 
     def stop_repeating(self) -> None:
         self._repeat_timer.stop()
+        self._stop_timer.stop()
 
     @property
     def is_repeating(self) -> bool:

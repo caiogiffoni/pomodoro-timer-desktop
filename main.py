@@ -69,7 +69,11 @@ def main() -> None:
                 if dlg.exec():
                     stats.update_session(session_id, dlg.notes, dlg.tag, dlg.focus_score)
         elif phase in ("break", "long_break"):
-            notifier.start_repeating(cfg["selected_sound"], cfg["repeat_interval"])
+            notifier.start_repeating(
+                cfg["selected_sound"],
+                cfg["repeat_interval"],
+                timeout_seconds=cfg.get("alarm_timeout", 3) * 60,
+            )
             tray.set_alarm_active(True)
 
     def on_phase_started(phase: str) -> None:

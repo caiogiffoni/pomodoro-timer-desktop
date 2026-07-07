@@ -86,6 +86,13 @@ class SettingsDialog(QDialog):
         self._spin_repeat.setSuffix(" sec")
         self._spin_repeat.setValue(cfg.get("repeat_interval", 30))
 
+        # --- Alarm timeout ---
+        self._spin_alarm_timeout = QSpinBox()
+        self._spin_alarm_timeout.setRange(0, 60)
+        self._spin_alarm_timeout.setSuffix(" min")
+        self._spin_alarm_timeout.setSpecialValueText("Never")
+        self._spin_alarm_timeout.setValue(cfg.get("alarm_timeout", 3))
+
         # --- Volume ---
         self._slider_vol = _JumpSlider(Qt.Orientation.Horizontal)
         self._slider_vol.setRange(0, 100)
@@ -128,6 +135,7 @@ class SettingsDialog(QDialog):
         form.addRow("Volume:", vol_row)
         form.addRow("Alarm sound:", sound_row)
         form.addRow("Repeat alarm every:", self._spin_repeat)
+        form.addRow("Stop alarm after:", self._spin_alarm_timeout)
         form.addRow("Auto-start break:", self._chk_auto_break)
         form.addRow("Daily goal:", self._spin_goal)
 
@@ -157,6 +165,7 @@ class SettingsDialog(QDialog):
             "volume": self._slider_vol.value(),
             "selected_sound": self._cfg["selected_sound"],
             "repeat_interval": self._spin_repeat.value(),
+            "alarm_timeout": self._spin_alarm_timeout.value(),
             "auto_start_break": self._chk_auto_break.isChecked(),
             "daily_goal": self._spin_goal.value(),
         }

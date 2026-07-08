@@ -17,6 +17,8 @@ A Pomodoro timer desktop app for Ubuntu (Linux) built with Python + PyQt6.
 - Stats tab: 7-day bar chart with week navigation + scrollable full history list
 - Streak tracking and daily goal progress
 - Post-session review: log what you worked on, tag it, and rate your focus (1–5)
+- Review dialog auto-fills from the previous session of the day — edit or clear as needed
+- Break alarm auto-stops after a configurable timeout (default 3 min; set to 0 to disable)
 - Config persists to `~/.config/pomodoro/config.json`
 - Session stats tracked in `~/.config/pomodoro/pomodoro.db` (SQLite)
 

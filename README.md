@@ -77,24 +77,8 @@ The Stats tab shows a 7-day bar chart and full history list. The tray context me
 
 ## Testing
 
-### Run locally
-
 ```bash
 uv run pytest
 ```
 
-Tests run against a temporary config and DB — your real data is never touched.
-
-### Run in CI (GitHub Actions)
-
-The pipeline is defined in `.github/workflows/test.yml`. It runs automatically on every push and pull request. It spins up a virtual display with Xvfb so PyQt6 widgets can render headlessly.
-
-To trigger it manually: push to `main` or open a pull request.
-
-### What's covered
-
-| File | Covers |
-|---|---|
-| `tests/test_startup.py` | Sections 1 & 2 of `TESTING.md` — startup, timer start/pause/resume/stop |
-
-Sections 3–13 of `TESTING.md` are manual for now. Add `tests/test_session_review.py`, `tests/test_alarm.py` etc. using the fixtures in `tests/conftest.py` to automate them.
+CI runs automatically on every push via `.github/workflows/test.yml`.

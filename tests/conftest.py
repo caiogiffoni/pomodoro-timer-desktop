@@ -42,6 +42,13 @@ def tmp_config(tmp_path, monkeypatch):
     return cfg
 
 
+@pytest.fixture(autouse=True)
+def reset_pending_session(monkeypatch):
+    """Reset the module-level pending session ID before every test."""
+    import app.stats as stats_mod
+    monkeypatch.setattr(stats_mod, "_pending_session_id", None)
+
+
 @pytest.fixture
 def timer():
     return PomodoroTimer(work_minutes=25, break_minutes=5, auto_start_break=False)

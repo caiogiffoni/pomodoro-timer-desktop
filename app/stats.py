@@ -134,7 +134,7 @@ def last_review_today(exclude_id: int) -> tuple[str | None, str | None, int | No
         row = conn.execute(
             "SELECT notes, tag, focus_score FROM sessions"
             " WHERE date = ? AND completed_at IS NOT NULL AND id != ?"
-            " ORDER BY completed_at DESC LIMIT 1",
+            " ORDER BY completed_at DESC, id DESC LIMIT 1",
             (date.today().isoformat(), exclude_id),
         ).fetchone()
     if row is None:

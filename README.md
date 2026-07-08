@@ -74,3 +74,27 @@ Each work session is recorded in `~/.config/pomodoro/pomodoro.db` (SQLite). Comp
 Sessions stopped early are kept with `completed_at = NULL` and excluded from counts. Existing `stats.json` data is migrated automatically on first launch.
 
 The Stats tab shows a 7-day bar chart and full history list. The tray context menu shows today's count.
+
+## Testing
+
+### Run locally
+
+```bash
+uv run pytest
+```
+
+Tests run against a temporary config and DB — your real data is never touched.
+
+### Run in CI (GitHub Actions)
+
+The pipeline is defined in `.github/workflows/test.yml`. It runs automatically on every push and pull request. It spins up a virtual display with Xvfb so PyQt6 widgets can render headlessly.
+
+To trigger it manually: push to `main` or open a pull request.
+
+### What's covered
+
+| File | Covers |
+|---|---|
+| `tests/test_startup.py` | Sections 1 & 2 of `TESTING.md` — startup, timer start/pause/resume/stop |
+
+Sections 3–13 of `TESTING.md` are manual for now. Add `tests/test_session_review.py`, `tests/test_alarm.py` etc. using the fixtures in `tests/conftest.py` to automate them.

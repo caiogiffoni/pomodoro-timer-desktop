@@ -7,3 +7,14 @@ requires-python = ">=3.14"
 dependencies = [
     "PyQt6>=6.7",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-qt>=4.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+qt_api = "pyqt6"
+pythonpath = ["."]

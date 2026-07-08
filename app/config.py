@@ -46,19 +46,22 @@ def seed(assets_dir: Path) -> None:
 
 def install_desktop_file(main_py: Path, icon_path: Path) -> None:
     """Write ~/.local/share/applications/pomodoro.desktop so GNOME dock shows the correct icon."""
-    _DESKTOP_FILE.parent.mkdir(parents=True, exist_ok=True)
-    content = (
-        "[Desktop Entry]\n"
-        "Version=1.0\n"
-        "Name=Pomodoro Timer\n"
-        "Type=Application\n"
-        f"Exec=uv run python {main_py.resolve()}\n"
-        f"Icon={icon_path.resolve()}\n"
-        "Terminal=false\n"
-        "StartupWMClass=Pomodoro\n"
-        "Categories=Utility;\n"
-    )
-    _DESKTOP_FILE.write_text(content)
+    try:
+        _DESKTOP_FILE.parent.mkdir(parents=True, exist_ok=True)
+        content = (
+            "[Desktop Entry]\n"
+            "Version=1.0\n"
+            "Name=Pomodoro Timer\n"
+            "Type=Application\n"
+            f"Exec=uv run python {main_py.resolve()}\n"
+            f"Icon={icon_path.resolve()}\n"
+            "Terminal=false\n"
+            "StartupWMClass=Pomodoro\n"
+            "Categories=Utility;\n"
+        )
+        _DESKTOP_FILE.write_text(content)
+    except OSError:
+        pass
 
 
 def load() -> dict:

@@ -59,15 +59,25 @@ def main() -> None:
             session_id = stats.record_session()
             tray._update_stats_label()
             if session_id is not None:
-                prev_notes, prev_tag, prev_focus = stats.last_review_today(session_id)
+                prev_notes, prev_tag, prev_focus, prev_project_id = (
+                    stats.last_review_today(session_id)
+                )
+                prefill_pid = cfg.get("active_project_id") or prev_project_id
                 dlg = SessionReviewDialog(
                     window,
                     prefill_notes=prev_notes,
                     prefill_tag=prev_tag,
                     prefill_focus=prev_focus,
+                    projects=[name for _, name, _ in stats.list_projects()],
+                    prefill_project=stats.project_name(prefill_pid) if prefill_pid else None,
                 )
                 if dlg.exec():
-                    stats.update_session(session_id, dlg.notes, dlg.tag, dlg.focus_score)
+                    project_id = stats.ensure_project(dlg.project) if dlg.project else None
+                    stats.update_session(
+                        session_id, dlg.notes, dlg.tag, dlg.focus_score,
+                        project_id=project_id,
+                    )
+                    window.refresh_projects()
         elif phase in ("break", "long_break"):
             notifier.start_repeating(
                 cfg["selected_sound"],
@@ -82,6 +92,7 @@ def main() -> None:
             stats.begin_session(
                 planned_duration_seconds=timer.work_duration,
                 pomodoro_number=pomodoro_num,
+                project_id=cfg.get("active_project_id"),
             )
 
     timer.phase_started.connect(on_phase_started)

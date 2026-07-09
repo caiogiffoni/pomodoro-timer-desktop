@@ -22,12 +22,27 @@ class SessionReviewDialog(QDialog):
         prefill_notes: str | None = None,
         prefill_tag: str | None = None,
         prefill_focus: int | None = None,
+        projects: list[str] | None = None,
+        prefill_project: str | None = None,
     ):
         super().__init__(parent)
         self.setWindowTitle("Session complete")
         self.setFixedWidth(340)
         self.setModal(True)
         self.setStyleSheet("font-size: 14px;")
+
+        self._project = QComboBox()
+        self._project.setEditable(True)
+        self._project.addItem("")
+        self._project.addItems(projects or [])
+        self._project.setCurrentIndex(0)
+        self._project.lineEdit().setPlaceholderText("Project (optional)")
+        if prefill_project:
+            idx = self._project.findText(prefill_project)
+            if idx >= 0:
+                self._project.setCurrentIndex(idx)
+            else:
+                self._project.setCurrentText(prefill_project)
 
         self._notes = QLineEdit()
         self._notes.setPlaceholderText("What did you work on? (optional)")
@@ -61,6 +76,7 @@ class SessionReviewDialog(QDialog):
         focus_row.addStretch()
 
         form = QFormLayout()
+        form.addRow("Project:", self._project)
         form.addRow("Notes:", self._notes)
         form.addRow("Tag:", self._tag)
 
@@ -77,6 +93,11 @@ class SessionReviewDialog(QDialog):
         layout.addLayout(focus_row)
         layout.addWidget(buttons)
         self.setLayout(layout)
+
+    @property
+    def project(self) -> str | None:
+        v = self._project.currentText().strip()
+        return v or None
 
     @property
     def notes(self) -> str | None:

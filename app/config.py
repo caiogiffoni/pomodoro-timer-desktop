@@ -18,6 +18,7 @@ _DEFAULTS = {
     "alarm_timeout": 3,
     "auto_start_break": True,
     "daily_goal": 0,
+    "active_project_id": None,
 }
 
 
@@ -42,6 +43,22 @@ def seed(assets_dir: Path) -> None:
         _CONFIG_FILE.write_text(json.dumps(_DEFAULTS, indent=2))
     from app import stats
     stats.init_db()
+    _migrate_projects_to_db()
+
+
+def _migrate_projects_to_db() -> None:
+    """Move the legacy config-based project list into the projects table (one-time)."""
+    try:
+        data = json.loads(_CONFIG_FILE.read_text())
+    except (json.JSONDecodeError, OSError):
+        return
+    if "projects" not in data and "active_project" not in data:
+        return
+    from app import stats
+    ids = {name: stats.ensure_project(name) for name in data.pop("projects", [])}
+    active = data.pop("active_project", "")
+    data["active_project_id"] = ids.get(active) if active else None
+    _CONFIG_FILE.write_text(json.dumps(data, indent=2))
 
 
 def install_desktop_file(main_py: Path, icon_path: Path) -> None:
